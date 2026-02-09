@@ -4,22 +4,22 @@
   <img src="utils/spotify.jpg" width="800">
 </p>
 
-**Course Project: INFO9023 - Machine Learning Systems Design** **Sprint 1: Project Organization** [cite: 3317, 4778]
+**Course Project: INFO9023 - Machine Learning Systems Design** **Sprint 1: Project Organization** 
 
 ## 📌 Project Overview
-The **AI DJ** is an end-to-end MLOps system designed to help record labels predict if a song will be a "Hit" or a "Flop" before release. While many ML projects stay as prototypes, this system is built with a focus on a production-ready **Automated Pipeline** (CI/CD/CT) to handle the fast-paced nature of music trends[cite: 3331, 3600].
+The **AI DJ** is an end-to-end MLOps system designed to help record labels predict if a song will be a "Hit" or a "Flop" before release. While many ML projects stay as prototypes, this system is built with a focus on a production-ready **Automated Pipeline** (CI/CD/CT) to handle the fast-paced nature of music trends.
 
 ### 🎯 Value Proposition
-* **Problem**: Music trends change rapidly, leading to high "technical debt" if models are not continuously updated[cite: 3574, 3576].
-* **Solution**: A predictive service that assesses song features (Danceability, Energy, Tempo) and triggers retraining based on **Seasonal Drift**[cite: 3620, 3624].
+* **Problem**: Music trends change rapidly, leading to high "technical debt" if models are not continuously updated.
+* **Solution**: A predictive service that assesses song features (Danceability, Energy, Tempo) and triggers retraining based on **Seasonal Drift**.
 
 ## 🏗 System Architecture & Technical Stack
-This project implements the "Hidden Technical Debt" concept by focusing on the 90% of engineering that surrounds the ML code[cite: 3573, 4337].
+This project implements the "Hidden Technical Debt" concept by focusing on the 90% of engineering that surrounds the ML code.
 
-* **Containerization**: The application is packaged using **Docker** to ensure consistency from development to production[cite: 3661, 4367].
-* **Orchestration**: Managed via **GitHub Actions** for CI/CD and **DVC** for data version control[cite: 3149, 3606].
-* **Model Serving**: Served as a **REST API** using **FastAPI** (deployed on Google Cloud Run) for real-time inference[cite: 3647, 4216].
-* **Monitoring**: Integrated performance tracking to detect data and concept drift[cite: 3620, 3717].
+* **Containerization**: The application is packaged using **Docker** to ensure consistency from development to production.
+* **Orchestration**: Managed via **GitHub Actions** for CI/CD and **DVC** for data version control.
+* **Model Serving**: Served as a **REST API** using **FastAPI** (deployed on Google Cloud Run) for real-time inference.
+* **Monitoring**: Integrated performance tracking to detect data and concept drift.
 
 ## 📁 Project Structure
 Following the course's mandatory documentation standards:
