@@ -52,9 +52,14 @@ info9023-ai-dj/
 │   └── monitoring/          # DRIFT DETECTION
 │       └── drift_service.py # Checks for "Musical Seasonal Drift"
 ├── tests/                   # Quality Assurance
+│   ├── test_api.py          # FastAPI endpoint tests
+│   ├── test_model.py        # Model logic & invariance tests
+│   └── test_data.py         # Data validation & schema tests
 │ 
 ├── Dockerfile.api           # Container for the Backend
 ├── Dockerfile.web           # Container for the Next.js App
+├── .pre-commit-config.yaml  # Hooks for ruff, trailing-whitespace, etc.
+├── ruff.toml                # Linting & Formatting rules
 ├── dvc.yaml                 # DVC Pipeline (Data -> Train -> Eval)
 ├── requirements.txt         # Python dependencies
 ├── package.json             # Next.js dependencies
