@@ -1,7 +1,14 @@
 FROM python:3.13-slim
-WORKDIR /app
-COPY . /app
-RUN pip install --no-cache-dir -r requirements.txt
+
+WORKDIR /src
+
+RUN pip install --no-cache-dir flask
+
+COPY src/ ./src/
+COPY utils/ ./utils/
+
 EXPOSE 8080
-ENV FLASK_APP=app.py
+
+ENV FLASK_APP=src/api/main.py
+
 CMD ["flask", "run", "--host=0.0.0.0", "--port=8080"]
