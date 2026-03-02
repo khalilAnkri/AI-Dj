@@ -42,22 +42,20 @@ info9023-ai-dj/
 │   │   ├── schemas.py       # Pydantic models (Data Validation)
 │   │   ├── model_loader.py  # Loads the .pkl or MLflow model
 │   │   └── utils.py         # spotipy client wrapper
-│   ├── web/                 # FRONTEND (Next.js)
+│   ├── ui/                 # FRONTEND (StreamLit)
 │   │   ├── components/      # Radar charts, Hit gauges
-│   │   ├── pages/           # Search & Prediction views
-│   │   └── lib/             # API client to talk to FastAPI
+│   │   ├── Templates/           
+│   │   └── app.py             # Main Streamlit application
 │   ├── training/            # ML PIPELINE
 │   │   ├── train.py         # Training script (XGBoost/LightGBM)
 │   │   └── evaluate.py      # Logs metrics to MLflow
 │   └── monitoring/          # DRIFT DETECTION
 │       └── drift_service.py # Checks for "Musical Seasonal Drift"
 ├── tests/                   # Quality Assurance
-│   ├── test_api.py          # FastAPI endpoint tests
-│   ├── test_model.py        # Model logic & invariance tests
-│   └── test_data.py         # Data validation & schema tests
+│   └── test_api.py          # FastAPI endpoint tests
 │ 
 ├── Dockerfile.api           # Container for the Backend
-├── Dockerfile.web           # Container for the Next.js App
+├── Dockerfile.ui           # Container for the Streamlit
 ├── .pre-commit-config.yaml  # Hooks for ruff, trailing-whitespace, etc.
 ├── ruff.toml                # Linting & Formatting rules
 ├── dvc.yaml                 # DVC Pipeline (Data -> Train -> Eval)
