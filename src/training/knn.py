@@ -11,10 +11,10 @@ Team AI-DJ :
 
 import pandas as pd
 from evaluate import evaluation
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, recall_score, f1_score, precision_score
-from sklearn.model_selection import train_test_split
 
 df = pd.read_csv('../../data/raw/dataset.csv')
 

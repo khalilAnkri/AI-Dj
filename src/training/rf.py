@@ -12,7 +12,7 @@ Team AI-DJ :
 import pandas as pd
 from evaluate import evaluation
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, recall_score, f1_score, precision_score
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 
 df = pd.read_csv('../../data/raw/dataset.csv')
