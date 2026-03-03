@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # Backend: Fa
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: api
+    ports:
+      - "8000:8000"
+    networks:
+      - ai-dj-net
+    restart: always
+
+  # Frontend: 
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    container_name: ui
+    ports:
+      - "8501:8501"
+    networks:
+      - ai-dj-net
+    environment:
+      - BACKEND_URL=http://api:8000/predict
+    depends_on:
+      - api
+
+networks:
+  ai-dj-net:
+    driver: bridge

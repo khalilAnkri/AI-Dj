@@ -13,7 +13,6 @@ def test_read_main():
 def test_prediction_endpoint_valid_data():
     """
     Test the core prediction logic with valid input
-    Ensures the model loader and FastAPI work together
     """
     valid_payload = {
         "danceability": 0.7,
