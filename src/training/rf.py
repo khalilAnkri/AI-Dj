@@ -15,7 +15,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 
-df = pd.read_csv('../../data/raw/dataset.csv')
+gcs_path = "gs://ai-dj-487610-bucket/data/uploaded_file.csv"
+df = pd.read_csv(gcs_path)
 
 df["hit"] = (df["popularity"] >= 65).astype(int)
 df = df.drop(columns=["popularity"])

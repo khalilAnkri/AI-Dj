@@ -16,7 +16,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 
-df = pd.read_csv('../../data/raw/dataset.csv')
+gcs_path = "gs://ai-dj-487610-bucket/data/uploaded_file.csv"
+df = pd.read_csv(gcs_path)
 
 df["hit"] = (df["popularity"] >= 65).astype(int)
 df = df.drop(columns=["popularity"])
