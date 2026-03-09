@@ -12,7 +12,7 @@ In order to implement our ML model, we have decided to train 3 algorithms and ev
 
 Firstly, in the case of the knn, we have decided to use `KNeighborsClassifier` function by setting the `weights` argument equals to `distance` in order to give more influence to the closer neighbors. Moreover, we have also decided to scale the inputs before applying the algorithm because in our dataset, features are on different scales such as ms, DB and normalized values between 0 and 1. Then, the best `n_neighbors` is equal to 2000 with a test f1 equals to 0.67.
 
-In the case of random forest, due to the unbalanced output (8.31% of hits), we have set the argument `8.31%` of `RandomForestClassifier` at `balanced` so that the algorithm will increase the importance of the underpresented class during the training i.e. the hit class. The best hyperparameters are : `bestN_estimators` equals to 100 and `max_depth` equals to `None` with a test f1 equals 0.65. 
+In the case of random forest, due to the unbalanced output (8.31% of hits), we have set the argument `class_weight` of `RandomForestClassifier` at `balanced` so that the algorithm will increase the importance of the underpresented class during the training i.e. the hit class. The best hyperparameters are : `bestN_estimators` equals to 100 and `max_depth` equals to `None` with a test f1 equals 0.65. 
 
 In the case of gradient boosting, the best hyparametrs are : `learning_rate` equals to 500, `n_estimators` equals to 5 and `max_depth` equals to 0.2 with a test f1 equals to 0.39.
 
