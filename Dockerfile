@@ -2,25 +2,26 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# install UV
+# Install UV
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Copy dependency files and install them
-COPY pyproject.toml uv.lock .
+# Copy dependency files first
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies into the .venv
+# Note: Ensure you ran 'uv add gunicorn numpy scikit-learn' locally first!
 RUN uv sync --frozen --no-dev --no-install-project
 
-# Copy application code
+# FIX: Copy the application code, the model, and the templates folder
 COPY hello.py .
+COPY model.pkl .
+COPY templates/ ./templates/
 
-# Add the virtual environment to PATH
+# Make venv binaries available (this is where gunicorn lives)
 ENV PATH="/app/.venv/bin:$PATH"
 
+# Cloud Run requirement
 EXPOSE 8080
 
-CMD ["flask", "--app", "hello", "run", "--host=0.0.0.0", "--port=8080"]
-
-# Build the image
-# docker build -t my-flask-app .
-
-# Run a container, mapping host port 9090 to container port 8080
-# docker run -p 9090:8080 my-flask-app
+# Production command
+CMD ["gunicorn", "--bind", ":8080", "--workers", "1", "--threads", "8", "hello:app"]
