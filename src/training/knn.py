@@ -10,14 +10,21 @@ Team AI-DJ :
 """
 
 import pandas as pd
+from google.cloud import bigquery
 from evaluate import evaluation
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 
-gcs_path = "gs://ai-dj-487610-bucket/data/uploaded_file.csv"
-df = pd.read_csv(gcs_path)
+client = bigquery.Client()
+
+query = """
+SELECT *
+FROM `ai-dj-487610.Spotify_Tracks.tracks`
+"""
+
+df = client.query(query).to_dataframe()
 
 df["hit"] = (df["popularity"] >= 65).astype(int)
 df = df.drop(columns=["popularity"])
