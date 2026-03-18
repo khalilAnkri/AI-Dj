@@ -1,6 +1,20 @@
+"""
+INFO9023 - Machine Learning Systems Design - Spotify Hit Predictor
+
+PyTest related to dataset_import.py
+
+Team AI-DJ : 
+    - Michon Charlotte
+    - Mohamed-Khalil Ankri
+    - Paulis Antoine
+"""
 from importDataset import importBigQuerry
 
 def test_dataset_import():
+    """
+    This function tests the importBigQuerry function by checking if the df returned
+    by importBigQuerry contains the correct column.
+    """
     
     df = importBigQuerry()
     

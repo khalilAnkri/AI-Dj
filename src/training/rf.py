@@ -9,7 +9,7 @@ Team AI-DJ :
     - Paulis Antoine
 """
 
-import pandas as pd
+from trainingPreprocess import trainingPreprocess
 from importDataset import importBigQuerry
 from evaluate import evaluation
 from sklearn.ensemble import RandomForestClassifier
@@ -18,13 +18,7 @@ from sklearn.model_selection import train_test_split
 
 df = importBigQuerry()
 
-df["hit"] = (df["popularity"] >= 65).astype(int)
-df = df.drop(columns=["popularity"])
-df = df.drop(columns=["Unnamed: 0"])
-
-X = df.drop("hit", axis=1)
-X = X.select_dtypes(include=["number"])
-y = df["hit"]
+X, y = trainingPreprocess(df)
 
 # Stratify=y so that the proportion of 92% flops and 8% hits are kept in the train and test set.
 XTrain, XTest, yTrain, yTest = train_test_split(
