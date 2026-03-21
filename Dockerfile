@@ -1,27 +1,15 @@
-FROM python:3.13-slim
+FROM mirror.gcr.io/library/python:3.11-slim
 
 WORKDIR /app
 
 # Install UV
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Copy dependency files first
+# Copy dependency files
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies into the .venv
-# Note: Ensure you ran 'uv add gunicorn numpy scikit-learn' locally first!
-RUN uv sync --frozen --no-dev --no-install-project
+# Install dependencies system-wide (no venv: this is a base image for pipeline components)
+RUN uv export --frozen --no-dev --no-hashes -o /tmp/requirements.txt && \
+    uv pip install --system -r /tmp/requirements.txt
 
-# FIX: Copy the application code, the model, and the templates folder
-COPY hello.py .
-COPY model.pkl .
-COPY templates/ ./templates/
-
-# Make venv binaries available (this is where gunicorn lives)
-ENV PATH="/app/.venv/bin:$PATH"
-
-# Cloud Run requirement
-EXPOSE 8080
-
-# Production command
-CMD ["gunicorn", "--bind", ":8080", "--workers", "1", "--threads", "8", "hello:app"]
+ENTRYPOINT ["bash"]

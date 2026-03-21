@@ -1,0 +1,339 @@
+{
+  "components": {
+    "comp-data-ingestion": {
+      "executorLabel": "exec-data-ingestion",
+      "inputDefinitions": {
+        "parameters": {
+          "bq_dataset": {
+            "parameterType": "STRING"
+          },
+          "bq_project": {
+            "parameterType": "STRING"
+          },
+          "bq_table": {
+            "parameterType": "STRING"
+          }
+        }
+      },
+      "outputDefinitions": {
+        "artifacts": {
+          "dataset": {
+            "artifactType": {
+              "schemaTitle": "system.Dataset",
+              "schemaVersion": "0.0.1"
+            }
+          }
+        }
+      }
+    },
+    "comp-evaluation": {
+      "executorLabel": "exec-evaluation",
+      "inputDefinitions": {
+        "artifacts": {
+          "model": {
+            "artifactType": {
+              "schemaTitle": "system.Model",
+              "schemaVersion": "0.0.1"
+            }
+          },
+          "preprocessed_dataset": {
+            "artifactType": {
+              "schemaTitle": "system.Dataset",
+              "schemaVersion": "0.0.1"
+            }
+          }
+        }
+      },
+      "outputDefinitions": {
+        "artifacts": {
+          "html": {
+            "artifactType": {
+              "schemaTitle": "system.HTML",
+              "schemaVersion": "0.0.1"
+            }
+          },
+          "metrics": {
+            "artifactType": {
+              "schemaTitle": "system.Metrics",
+              "schemaVersion": "0.0.1"
+            }
+          }
+        }
+      }
+    },
+    "comp-preprocessing": {
+      "executorLabel": "exec-preprocessing",
+      "inputDefinitions": {
+        "artifacts": {
+          "input_dataset": {
+            "artifactType": {
+              "schemaTitle": "system.Dataset",
+              "schemaVersion": "0.0.1"
+            }
+          }
+        }
+      },
+      "outputDefinitions": {
+        "artifacts": {
+          "preprocessed_dataset": {
+            "artifactType": {
+              "schemaTitle": "system.Dataset",
+              "schemaVersion": "0.0.1"
+            }
+          }
+        }
+      }
+    },
+    "comp-training": {
+      "executorLabel": "exec-training",
+      "inputDefinitions": {
+        "artifacts": {
+          "preprocessed_dataset": {
+            "artifactType": {
+              "schemaTitle": "system.Dataset",
+              "schemaVersion": "0.0.1"
+            }
+          }
+        },
+        "parameters": {
+          "hyperparameters": {
+            "parameterType": "STRUCT"
+          }
+        }
+      },
+      "outputDefinitions": {
+        "artifacts": {
+          "metrics": {
+            "artifactType": {
+              "schemaTitle": "system.Metrics",
+              "schemaVersion": "0.0.1"
+            }
+          },
+          "model": {
+            "artifactType": {
+              "schemaTitle": "system.Model",
+              "schemaVersion": "0.0.1"
+            }
+          }
+        }
+      }
+    }
+  },
+  "defaultPipelineRoot": "gs://mlops-labs-bucket/pipeline_root_houseprice/",
+  "deploymentSpec": {
+    "executors": {
+      "exec-data-ingestion": {
+        "container": {
+          "args": [
+            "--executor_input",
+            "{{$}}",
+            "--function_to_execute",
+            "data_ingestion"
+          ],
+          "command": [
+            "sh",
+            "-c",
+            "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location 'pandas' 'pyarrow' 'scikit-learn' 'torch' 'google-cloud-bigquery'  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.16.0' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\n",
+            "sh",
+            "-ec",
+            "program_path=$(mktemp -d)\n\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\n_KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+            "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import *\n\ndef data_ingestion(\n    bq_project: str,\n    bq_dataset: str,\n    bq_table: str,\n    dataset: Output[Dataset]\n):\n    \"\"\"\n    Extract a BigQuery table and save it as a single Parquet file to the pipeline output folder (GCS URI required).\n    \"\"\"\n\n    from google.cloud import bigquery\n    import os\n\n    client = bigquery.Client(project=bq_project)\n\n    # BigQuery needs a valid GCS URI\n    destination_uri = f\"{dataset.uri}/data.parquet\"  # dataset.uri is already a gs:// path\n\n    extract_job = client.extract_table(\n        f\"{bq_project}.{bq_dataset}.{bq_table}\",\n        destination_uris=[destination_uri],\n        job_config=bigquery.ExtractJobConfig(\n            destination_format=bigquery.DestinationFormat.PARQUET\n        )\n    )\n\n    extract_job.result()\n    print(f\"\u2705 Exported BigQuery table {bq_dataset}.{bq_table} to {destination_uri}\")\n\n"
+          ],
+          "image": "europe-west1-docker.pkg.dev/ai-dj-487610/vertex-ai-pipeline-example/pipeline-base:latest"
+        }
+      },
+      "exec-evaluation": {
+        "container": {
+          "args": [
+            "--executor_input",
+            "{{$}}",
+            "--function_to_execute",
+            "evaluation"
+          ],
+          "command": [
+            "sh",
+            "-c",
+            "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location 'pandas' 'pyarrow' 'scikit-learn' 'torch' 'google-cloud-bigquery'  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.16.0' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\n",
+            "sh",
+            "-ec",
+            "program_path=$(mktemp -d)\n\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\n_KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+            "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import *\n\ndef evaluation(\n    model: Input[Model],\n    preprocessed_dataset: Input[Dataset],\n    metrics: Output[Metrics],\n    html: Output[HTML]\n):\n    import os\n    import pandas as pd\n    import torch\n    import torch.nn as nn\n    from sklearn.metrics import mean_squared_error, r2_score\n\n    # Load preprocessed data\n    df = pd.read_parquet(os.path.join(preprocessed_dataset.path, \"data.parquet\"))\n    target = \"price\"\n    X = df.drop(columns=[target]).values\n    y = df[target].values\n\n    # Load trained model\n    checkpoint = torch.load(os.path.join(model.path, \"model.pth\"))\n\n    model_nn = nn.Sequential(\n        nn.Linear(checkpoint[\"input_size\"], checkpoint[\"hidden_size\"]),\n        nn.ReLU(),\n        nn.Linear(checkpoint[\"hidden_size\"], 1)\n    )\n    model_nn.load_state_dict(checkpoint[\"state_dict\"])\n    model_nn.eval()\n\n    # Predictions\n    with torch.no_grad():\n        preds = model_nn(torch.tensor(X, dtype=torch.float32)).cpu().numpy()\n\n    # Metrics\n    mse = mean_squared_error(y, preds)\n    r2 = r2_score(y, preds)\n\n    metrics.log_metric(\"mse\", float(mse))\n    metrics.log_metric(\"r2\", float(r2))\n\n    # Save HTML report\n    os.makedirs(os.path.dirname(html.path), exist_ok=True)\n    with open(html.path, \"w\") as f:\n        f.write(f\"\"\"\n        <html>\n        <body>\n        <h1>Evaluation Report</h1>\n        <p>MSE: {mse:.4f}</p>\n        <p>R2: {r2:.4f}</p>\n        </body>\n        </html>\n        \"\"\")\n\n    print(f\"Evaluation complete. Metrics logged and report saved to {html.path}\")\n\n"
+          ],
+          "image": "europe-west1-docker.pkg.dev/ai-dj-487610/vertex-ai-pipeline-example/pipeline-base:latest"
+        }
+      },
+      "exec-preprocessing": {
+        "container": {
+          "args": [
+            "--executor_input",
+            "{{$}}",
+            "--function_to_execute",
+            "preprocessing"
+          ],
+          "command": [
+            "sh",
+            "-c",
+            "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location 'pandas' 'pyarrow' 'scikit-learn' 'torch' 'google-cloud-bigquery'  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.16.0' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\n",
+            "sh",
+            "-ec",
+            "program_path=$(mktemp -d)\n\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\n_KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+            "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import *\n\ndef preprocessing(\n    input_dataset: Input[Dataset],\n    preprocessed_dataset: Output[Dataset],\n):\n    import os   \n    import pandas as pd\n    from sklearn.preprocessing import StandardScaler, OneHotEncoder\n\n    # Read parquet file\n    df = pd.read_parquet(os.path.join(input_dataset.path, \"data.parquet\"))\n\n    target = \"price\"\n\n    numerical_cols = df.select_dtypes(include=[\"int64\", \"float64\"]).columns.tolist()\n    categorical_cols = df.select_dtypes(include=[\"object\"]).columns.tolist()\n\n    if target in numerical_cols:\n        numerical_cols.remove(target)\n\n    # Scale numerical\n    scaler = StandardScaler()\n    df[numerical_cols] = scaler.fit_transform(df[numerical_cols])\n\n    # Encode categorical\n    if len(categorical_cols) > 0:\n        encoder = OneHotEncoder(sparse_output=False, handle_unknown=\"ignore\")\n        encoded = encoder.fit_transform(df[categorical_cols])\n        encoded_df = pd.DataFrame(encoded, columns=encoder.get_feature_names_out(categorical_cols))\n    else:\n        encoded_df = pd.DataFrame()\n\n    df_processed = pd.concat(\n        [df[numerical_cols], encoded_df, df[target]],\n        axis=1\n    )\n\n    os.makedirs(preprocessed_dataset.path, exist_ok=True)\n    df_processed.to_parquet(os.path.join(preprocessed_dataset.path, \"data.parquet\"))\n\n    print(f\"Preprocessing complete. Output saved to {preprocessed_dataset.path}\")\n\n"
+          ],
+          "image": "europe-west1-docker.pkg.dev/ai-dj-487610/vertex-ai-pipeline-example/pipeline-base:latest"
+        }
+      },
+      "exec-training": {
+        "container": {
+          "args": [
+            "--executor_input",
+            "{{$}}",
+            "--function_to_execute",
+            "training"
+          ],
+          "command": [
+            "sh",
+            "-c",
+            "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location 'pandas' 'pyarrow' 'scikit-learn' 'torch' 'google-cloud-bigquery'  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.16.0' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\n",
+            "sh",
+            "-ec",
+            "program_path=$(mktemp -d)\n\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\n_KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+            "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import *\n\ndef training(\n    preprocessed_dataset: Input[Dataset],\n    model: Output[Model],\n    metrics: Output[Metrics],\n    hyperparameters: dict\n):\n    import os\n    import pandas as pd\n    import torch\n    import torch.nn as nn\n    from torch.utils.data import Dataset as TorchDataset, DataLoader\n    from sklearn.model_selection import train_test_split\n    from sklearn.metrics import mean_squared_error, r2_score\n\n    # Load data\n    df = pd.read_parquet(os.path.join(preprocessed_dataset.path, \"data.parquet\"))\n    target = \"price\"\n\n    X = df.drop(columns=[target]).values\n    y = df[target].values\n\n    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)\n\n    class HouseDataset(TorchDataset):\n        def __init__(self, X, y):\n            self.X = torch.tensor(X, dtype=torch.float32)\n            self.y = torch.tensor(y, dtype=torch.float32).view(-1, 1)\n\n        def __len__(self):\n            return len(self.X)\n\n        def __getitem__(self, idx):\n            return self.X[idx], self.y[idx]\n\n    train_loader = DataLoader(HouseDataset(X_train, y_train), batch_size=hyperparameters[\"batch_size\"], shuffle=True)\n    val_loader = DataLoader(HouseDataset(X_val, y_val), batch_size=hyperparameters[\"batch_size\"])\n\n    # Define model\n    input_size = X.shape[1]\n    hidden_size = hyperparameters[\"hidden_size\"]\n\n    model_nn = nn.Sequential(\n        nn.Linear(input_size, hidden_size),\n        nn.ReLU(),\n        nn.Linear(hidden_size, 1)\n    )\n\n    optimizer = torch.optim.Adam(model_nn.parameters(), lr=hyperparameters[\"lr\"])\n    loss_fn = nn.MSELoss()\n\n    # Training loop\n    for epoch in range(hyperparameters[\"epochs\"]):\n        model_nn.train()\n        for xb, yb in train_loader:\n            pred = model_nn(xb)\n            loss = loss_fn(pred, yb)\n\n            optimizer.zero_grad()\n            loss.backward()\n            optimizer.step()\n\n    # Validation\n    model_nn.eval()\n    preds, truths = [], []\n\n    with torch.no_grad():\n        for xb, yb in val_loader:\n            p = model_nn(xb)\n            preds.extend(p.cpu().numpy())\n            truths.extend(yb.cpu().numpy())\n\n    # Log metrics\n    mse = mean_squared_error(truths, preds)\n    r2 = r2_score(truths, preds)\n    metrics.log_metric(\"mse\", float(mse))\n    metrics.log_metric(\"r2\", float(r2))\n\n    # Save model\n    os.makedirs(model.path, exist_ok=True)\n    torch.save({\n        \"state_dict\": model_nn.state_dict(),\n        \"input_size\": input_size,\n        \"hidden_size\": hidden_size\n    }, os.path.join(model.path, \"model.pth\"))\n\n    print(f\"Training complete. Model saved to {os.path.join(model.path, 'model.pth')}\")\n\n"
+          ],
+          "image": "europe-west1-docker.pkg.dev/ai-dj-487610/vertex-ai-pipeline-example/pipeline-base:latest"
+        }
+      }
+    }
+  },
+  "pipelineInfo": {
+    "name": "houseprice-pipeline"
+  },
+  "root": {
+    "dag": {
+      "tasks": {
+        "data-ingestion": {
+          "cachingOptions": {
+            "enableCache": true
+          },
+          "componentRef": {
+            "name": "comp-data-ingestion"
+          },
+          "inputs": {
+            "parameters": {
+              "bq_dataset": {
+                "runtimeValue": {
+                  "constant": "housing_dataset"
+                }
+              },
+              "bq_project": {
+                "runtimeValue": {
+                  "constant": "ai-dj-487610"
+                }
+              },
+              "bq_table": {
+                "runtimeValue": {
+                  "constant": "housing"
+                }
+              }
+            }
+          },
+          "taskInfo": {
+            "name": "data-ingestion"
+          }
+        },
+        "evaluation": {
+          "cachingOptions": {
+            "enableCache": true
+          },
+          "componentRef": {
+            "name": "comp-evaluation"
+          },
+          "dependentTasks": [
+            "preprocessing",
+            "training"
+          ],
+          "inputs": {
+            "artifacts": {
+              "model": {
+                "taskOutputArtifact": {
+                  "outputArtifactKey": "model",
+                  "producerTask": "training"
+                }
+              },
+              "preprocessed_dataset": {
+                "taskOutputArtifact": {
+                  "outputArtifactKey": "preprocessed_dataset",
+                  "producerTask": "preprocessing"
+                }
+              }
+            }
+          },
+          "taskInfo": {
+            "name": "evaluation"
+          }
+        },
+        "preprocessing": {
+          "cachingOptions": {
+            "enableCache": true
+          },
+          "componentRef": {
+            "name": "comp-preprocessing"
+          },
+          "dependentTasks": [
+            "data-ingestion"
+          ],
+          "inputs": {
+            "artifacts": {
+              "input_dataset": {
+                "taskOutputArtifact": {
+                  "outputArtifactKey": "dataset",
+                  "producerTask": "data-ingestion"
+                }
+              }
+            }
+          },
+          "taskInfo": {
+            "name": "preprocessing"
+          }
+        },
+        "training": {
+          "cachingOptions": {
+            "enableCache": true
+          },
+          "componentRef": {
+            "name": "comp-training"
+          },
+          "dependentTasks": [
+            "preprocessing"
+          ],
+          "inputs": {
+            "artifacts": {
+              "preprocessed_dataset": {
+                "taskOutputArtifact": {
+                  "outputArtifactKey": "preprocessed_dataset",
+                  "producerTask": "preprocessing"
+                }
+              }
+            },
+            "parameters": {
+              "hyperparameters": {
+                "runtimeValue": {
+                  "constant": {
+                    "batch_size": 32.0,
+                    "epochs": 50.0,
+                    "hidden_size": 64.0,
+                    "lr": 0.001
+                  }
+                }
+              }
+            }
+          },
+          "taskInfo": {
+            "name": "training"
+          }
+        }
+      }
+    }
+  },
+  "schemaVersion": "2.1.0",
+  "sdkVersion": "kfp-2.16.0"
+}
