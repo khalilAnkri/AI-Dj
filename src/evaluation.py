@@ -32,11 +32,12 @@ def evaluation(
 
     # Load trained model
     checkpoint = torch.load(os.path.join(model.path, "model.pth"))
-
     model_nn = nn.Sequential(
         nn.Linear(checkpoint["input_size"], checkpoint["hidden_size"]),
         nn.ReLU(),
-        nn.Linear(checkpoint["hidden_size"], 1)
+        nn.Linear(checkpoint["hidden_size"], checkpoint["hidden_size"] // 2),
+        nn.ReLU(),
+        nn.Linear(checkpoint["hidden_size"] // 2, 1)
     )
     model_nn.load_state_dict(checkpoint["state_dict"])
     model_nn.eval()
@@ -57,12 +58,42 @@ def evaluation(
     with open(html.path, "w") as f:
         f.write(f"""
         <html>
+        <head>
+            <style>
+                body {{
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f9;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                }}
+                .report {{
+                    background-color: #ffffff;
+                    padding: 30px 50px;
+                    border-radius: 15px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                    text-align: center;
+                }}
+                h1 {{
+                    color: #2c3e50;
+                    margin-bottom: 20px;
+                }}
+                p {{
+                    font-size: 18px;
+                    margin: 10px 0;
+                }}
+                .mse {{ color: #e74c3c; font-weight: bold; }}
+                .r2 {{ color: #27ae60; font-weight: bold; }}
+            </style>
+        </head>
         <body>
-        <h1>Evaluation Report</h1>
-        <p>MSE: {mse:.4f}</p>
-        <p>R2: {r2:.4f}</p>
+            <div class="report">
+                <h1>Evaluation Report</h1>
+                <p class="mse">MSE: {mse:.4f}</p>
+                <p class="r2">R²: {r2:.4f}</p>
+            </div>
         </body>
         </html>
         """)
-
     print(f"Evaluation complete. Metrics logged and report saved to {html.path}")

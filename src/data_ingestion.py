@@ -27,8 +27,8 @@ def data_ingestion(
 
     client = bigquery.Client(project=bq_project)
 
-    # BigQuery needs a valid GCS URI
-    destination_uri = f"{dataset.uri}/data.parquet"  # dataset.uri is already a gs:// path
+
+    destination_uri = f"{dataset.uri}/data.parquet" 
 
     extract_job = client.extract_table(
         f"{bq_project}.{bq_dataset}.{bq_table}",

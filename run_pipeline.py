@@ -1,7 +1,7 @@
 from kfp import dsl, compiler
 from google.cloud import aiplatform
 
-# Import your components
+
 from src.data_ingestion import data_ingestion
 from src.preprocessing import preprocessing
 from src.training import training
