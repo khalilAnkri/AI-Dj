@@ -1,5 +1,5 @@
-import pytest
 from fastapi.testclient import TestClient
+
 from src.api.main import app
 
 client = TestClient(app)
@@ -30,6 +30,6 @@ def test_prediction_invalid_data():
     """
     Validate input schema 
     """
-    invalid_payload = {"danceability": "very_high"} 
+    invalid_payload = {"danceability": "very_high"}
     response = client.post("/predict", json=invalid_payload)
-    assert response.status_code == 422  
+    assert response.status_code == 422

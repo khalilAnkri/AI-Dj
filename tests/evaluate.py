@@ -3,7 +3,7 @@ INFO9023 - Machine Learning Systems Design - Spotify Hit Predictor
 
 Evaluation of classifier
 
-Team AI-DJ : 
+Team AI-DJ :
     - Michon Charlotte
     - Mohamed-Khalil Ankri
     - Paulis Antoine
@@ -14,21 +14,22 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 
+
 def metricsEval(yValFold, yPred):
     """
     This function computes some metrics of model evaluation given a set of
     true output and estimated output.
-    
+
     Args:
         yValFold: set of true output.
         yPred: set of estimated output.
-    
+
     Returns:
         accuracy: accuracy.
         recall: recall.
         f1: f1 score.
-        precision: precision.  
-    """    
+        precision: precision.
+    """
     accuracy = accuracy_score(yValFold, yPred)
     recall = recall_score(yValFold, yPred)
     f1 = f1_score(yValFold, yPred)
@@ -65,7 +66,7 @@ def evaluation(model, XTrain, yTrain, scale, n_folds=5):
         XValFold = XTrain.iloc[val_idx]
         yValFold = yTrain.iloc[val_idx]
 
-        if scale == True:
+        if scale:
             scaler = StandardScaler()
             XTrainFold = scaler.fit_transform(
                 XTrainFold)  # learn the scale and apply
@@ -74,7 +75,7 @@ def evaluation(model, XTrain, yTrain, scale, n_folds=5):
 
         model.fit(XTrainFold, yTrainFold)
         yPred = model.predict(XValFold)
-        
+
         accuracy, recall, f1, precision = metricsEval(yValFold, yPred)
 
         accuracies.append(accuracy)
