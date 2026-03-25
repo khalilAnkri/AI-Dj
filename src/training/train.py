@@ -12,7 +12,7 @@ X, y = trainingPreprocess(df)
 model = RandomForestClassifier(n_estimators=100, max_depth=None,
                                random_state=42, class_weight="balanced")
 
-model.fit(X,y)
+model.fit(X,y) # Evaluation separated in another file
 
 importance = model.feature_importances_
 
@@ -23,7 +23,7 @@ featureImportance = featureImportance.sort_values(by="importance", ascending=Fal
 
 listTop5 = featureImportance["feature"].head(5).tolist()
 
-# Savef and export for deployment
+# Save and export model for deployment
 with open("model.pkl", "wb") as f:
     pickle.dump(model, f)
 
