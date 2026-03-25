@@ -1,7 +1,9 @@
+import pickle
+
 import pandas as pd
 from importDataset import importBigQuerry
-from trainingPreprocess import trainingPreprocess
 from sklearn.ensemble import RandomForestClassifier
+from trainingPreprocess import trainingPreprocess
 
 df = importBigQuerry()
 
@@ -20,3 +22,13 @@ featureImportance = pd.DataFrame({ "feature": X.columns,
 featureImportance = featureImportance.sort_values(by="importance", ascending=False)
 
 listTop5 = featureImportance["feature"].head(5).tolist()
+
+# Savef and export for deployment
+with open("model.pkl", "wb") as f:
+    pickle.dump(model, f)
+
+with open("columns.pkl", "wb") as f:
+    pickle.dump(X.columns.tolist(), f)
+
+with open("top_5.pkl", "wb") as f:
+    pickle.dump(listTop5, f)

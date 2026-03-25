@@ -3,18 +3,18 @@ INFO9023 - Machine Learning Systems Design - Spotify Hit Predictor
 
 Training and testing of rf model.
 
-Team AI-DJ : 
+Team AI-DJ :
     - Michon Charlotte
     - Mohamed-Khalil Ankri
     - Paulis Antoine
 """
 
-from trainingPreprocess import trainingPreprocess
-from importDataset import importBigQuerry
 from evaluate import evaluation
+from importDataset import importBigQuerry
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
+from trainingPreprocess import trainingPreprocess
 
 df = importBigQuerry()
 

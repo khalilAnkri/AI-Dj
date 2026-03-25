@@ -9,14 +9,13 @@ Team AI-DJ :
     - Paulis Antoine
 """
 
-import pandas as pd
-from trainingPreprocess import trainingPreprocess
-from importDataset import importBigQuerry
 from evaluate import evaluation
+from importDataset import importBigQuerry
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
+from trainingPreprocess import trainingPreprocess
 
 df = importBigQuerry()
 

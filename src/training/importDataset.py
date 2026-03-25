@@ -3,21 +3,22 @@ INFO9023 - Machine Learning Systems Design - Spotify Hit Predictor
 
 Import of the dataset from BigQuerry
 
-Team AI-DJ : 
+Team AI-DJ :
     - Michon Charlotte
     - Mohamed-Khalil Ankri
     - Paulis Antoine
 """
 from google.cloud import bigquery
 
+
 def importBigQuerry():
     """
     This function import the dataset stored the Google cloud
-    
+
     Returns:
         df: pandas data frame about the Spotify track dataset from Kaggle. 
     """
-    
+
     client = bigquery.Client()
 
     query = """
