@@ -8,8 +8,11 @@ Team AI-DJ :
     - Mohamed-Khalil Ankri
     - Paulis Antoine
 """
-from importDataset import importBigQuerry
+import sys
+import os
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'training'))
+from importDataset import importBigQuerry
 
 def test_dataset_import():
     """
