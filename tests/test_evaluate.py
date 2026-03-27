@@ -8,8 +8,12 @@ Team AI-DJ :
     - Mohamed-Khalil Ankri
     - Paulis Antoine
 """
-from evaluate import metricsEval
+import sys
+import os
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'training'))
+
+from evaluate import metricsEval
 
 def test_metricsEval():
     """
