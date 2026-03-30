@@ -1,13 +1,16 @@
-FROM python:3.13-slim
+FROM mirror.gcr.io/library/python:3.13-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml uv.lock ./
 
-COPY . .
+RUN uv export --frozen --no-dev --no-hashes -o /tmp/requirements.txt && \
+    uv pip install --system -r /tmp/requirements.txt
 
-EXPOSE 8080
+COPY src/ ./src/
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker", "app:app"]
+ENV PORT=8501
+
+CMD streamlit run src/data_visualization.py --server.port $PORT --server.address=0.0.0.0
