@@ -1,0 +1,9 @@
+# Pip compatibility mode, with our requirements.txt
+# create a new Python virtual environment
+uv venv --python 3.12
+
+# UV configuration 
+.venv\Scripts\activate # Windows
+
+# install from requirements.txt
+uv pip install -r requirements.txt
