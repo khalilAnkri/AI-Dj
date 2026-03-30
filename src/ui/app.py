@@ -1,3 +1,4 @@
+import os
 import pickle
 
 import pandas as pd
@@ -18,9 +19,12 @@ sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
 # Model loading
 app = FastAPI(title="Spotify Hit Predictor")
 
-model = pickle.load(open("../training/model.pkl", "rb"))
-model_columns = pickle.load(open("../training/columns.pkl", "rb"))
-list_top5 = pickle.load(open("../training/top_5.pkl", "rb"))
+# Specify absolute path for Docker image
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+model = pickle.load(open(os.path.join(BASE_DIR, "../training/model.pkl"), "rb"))
+model_columns = pickle.load(open(os.path.join(BASE_DIR, "../training/columns.pkl"), "rb"))
+list_top5 = pickle.load(open(os.path.join(BASE_DIR, "../training/top_5.pkl"), "rb"))
 
 classes = ["Not a Hit", "Hit"]
 history = []

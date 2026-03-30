@@ -9,3 +9,7 @@ uv venv --python 3.12
 uv pip install -r requirements.txt
 
 uv run uvicorn app:app --host 0.0.0.0 --port 8080 --reload
+
+
+docker build -t ui-app . 
+docker run -p 8080:8080 ui-app
