@@ -15,4 +15,5 @@ dependencies = [
     "redis>=5.0.0",
     "google-cloud-bigquery>=3.40.1",
     "db-dtypes>=1.5.0",
+    "google-cloud-storage>=3.10.1",
 ]

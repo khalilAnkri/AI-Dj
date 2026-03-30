@@ -5,6 +5,7 @@ import pandas as pd
 import spotipy
 import uvicorn
 from fastapi import FastAPI, HTTPException
+from google.cloud import storage
 from spotipy.oauth2 import SpotifyClientCredentials
 
 # Configuration: environment variable to use in practical
@@ -21,6 +22,20 @@ app = FastAPI(title="Spotify Hit Predictor")
 
 # Specify absolute path for Docker image
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BUCKET_NAME = "ai-dj-487610-bucket"
+MODEL_DIR = os.path.join(BASE_DIR, "../training")
+
+def download_models():
+    client = storage.Client(project="ai-dj-487610")
+    bucket = client.bucket(BUCKET_NAME)
+    for fname in ["model.pkl", "columns.pkl", "top_5.pkl"]:
+        dest = os.path.join(MODEL_DIR, fname)
+        if not os.path.exists(dest):
+            print(f"Downloading {fname} from GCS...")
+            bucket.blob(f"pkl/{fname}").download_to_filename(dest)
+            print(f"{fname} downloaded.")
+
+download_models()
 
 model = pickle.load(open(os.path.join(BASE_DIR, "../training/model.pkl"), "rb"))
 model_columns = pickle.load(open(os.path.join(BASE_DIR, "../training/columns.pkl"), "rb"))
