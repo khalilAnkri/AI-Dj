@@ -18,8 +18,8 @@ sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
 app = FastAPI(title="Spotify Hit Predictor")
 
 model = pickle.load(open("../training/model.pkl", "rb"))
-model_columns = pickle.load(open("columns.pkl", "rb"))
-list_top5 = pickle.load(open("top_5.pkl", "rb"))
+model_columns = pickle.load(open("../training/columns.pkl", "rb"))
+list_top5 = pickle.load(open("../training/top_5.pkl", "rb"))
 
 classes = ["Not a Hit", "Hit"]
 history = []
@@ -81,6 +81,9 @@ def get_prediction_by_id(prediction_id: int):
 
     return history[prediction_id]
 
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
 # Predict with track name or direct Spotify link
 @app.post("/predict")
