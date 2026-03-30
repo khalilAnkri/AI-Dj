@@ -13,5 +13,5 @@ COPY . .
 
 EXPOSE 8080
 
-# Put exact location of app.py
-CMD ["uvicorn", "src.ui.app:app", "--host", "0.0.0.0", "--port", "8080"]
+# Put exact location of app.py; add variable port and parameters for docker
+CMD ["sh", "-c", "uvicorn src.ui.app:app --host 0.0.0.0 --port ${PORT:-8080}"] 
