@@ -3,34 +3,43 @@ from src.pipelines.config import BASE_IMAGE
 
 @component(
     base_image=BASE_IMAGE,
-    packages_to_install=["pandas", "pyarrow"]
+    packages_to_install=["pandas", "pyarrow", "scikit-learn"] # Add scikit-learn for splitting
 )
 def training_preprocess(
     input_dataset: Input[Dataset],
-    output_dataset: Output[Dataset],
+    train_dataset: Output[Dataset],  # New: Specifically for Training
+    test_dataset: Output[Dataset],   # New: Specifically for Evaluation
 ):
     import pandas as pd
-    
+    from sklearn.model_selection import train_test_split
 
-    # input_dataset.path is the exact location of the parquet file from the previous step.
+    # 1. Load data
     df = pd.read_parquet(input_dataset.path)
 
-    # Creating the target variable for the AI DJ
+    # 2. Target Engineering
     df["hit"] = (df["popularity"] >= 65).astype(int)
     
-    # Dropping non-feature columns
+    # 3. Feature Selection
+    # Dropping non-feature columns and keeping only numeric
     df = df.drop(columns=["popularity", "Unnamed: 0"], errors="ignore")
+    numeric_df = df.select_dtypes(include=["number"]).copy()
+    
+    # Ensure "hit" is included in the final set before splitting
+    if "hit" not in numeric_df.columns:
+        numeric_df["hit"] = df["hit"]
 
-    # Feature Selection: Only numeric features for the models (RF/GB/KNN)
-    X = df.drop("hit", axis=1)
-    X = X.select_dtypes(include=["number"])
-    y = df["hit"]
+    # 4. THE FIX: The Train/Test Split
+    # We set aside 20% of the data that the model will NEVER see during training
+    train_df, test_df = train_test_split(
+        numeric_df, 
+        test_size=0.2, 
+        random_state=42, 
+        stratify=numeric_df["hit"] # Ensures equal hit/miss ratio in both sets
+    )
 
-    # Combine into one dataframe for the training component
-    processed_df = X.copy()
-    processed_df["hit"] = y
+    # 5. Save separate artifacts
+    train_df.to_parquet(train_dataset.path)
+    test_df.to_parquet(test_dataset.path)
 
-    # Save output
-    processed_df.to_parquet(output_dataset.path)
-
-    print(f"Preprocessed dataset saved with {len(processed_df)} rows and {len(X.columns)} features.")
+    print(f"Preprocessing complete.")
+    print(f"Training set: {len(train_df)} rows | Test set: {len(test_df)} rows")

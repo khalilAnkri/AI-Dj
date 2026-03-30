@@ -8,24 +8,23 @@ from src.pipelines.config import PIPELINE_NAME, PROJECT_ID
 @dsl.pipeline(name=PIPELINE_NAME)
 def ai_dj_training_workflow(
     project_id: str = PROJECT_ID,
-    # Adding a version or timestamp parameter here helps with Experiment Tracking
     model_version: str = "v1" 
 ):
     # Step 1: Data ingestion
     data_task = import_bigquery(project_id=project_id)
 
-    # Step 2: Preprocessing
+    # Step 2: Preprocessing (Now generates TWO outputs)
     preprocess_task = training_preprocess(
         input_dataset=data_task.outputs["output_dataset"]
     )
 
-    # Step 3: Training
+    # Step 3: Training (Only sees the "train" split)
     train_task = train_model(
-        preprocessed_dataset=preprocess_task.outputs["output_dataset"]
+        preprocessed_dataset=preprocess_task.outputs["train_dataset"]
     )
 
-    # Step 4: Evaluation
+    # Step 4: Evaluation (Only sees the "test" split)
     evaluate_task = evaluate_model(
         model=train_task.outputs["model"],
-        preprocessed_dataset=preprocess_task.outputs["output_dataset"]
+        preprocessed_dataset=preprocess_task.outputs["test_dataset"]  
     )

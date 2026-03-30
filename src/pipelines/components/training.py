@@ -6,8 +6,7 @@ from src.pipelines.config import BASE_IMAGE
     packages_to_install=[
         "pandas",
         "scikit-learn",
-        "pyarrow",
-        "joblib"
+        "pyarrow"
     ]
 )
 def train_model(
@@ -17,11 +16,11 @@ def train_model(
     n_estimators: int = 100, 
 ):
     import pandas as pd
-    import joblib
+    import pickle
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.metrics import accuracy_score
 
-    # 1. Load data using the direct path
+    # 1. Load the TRAINING split (80% of data)
     df = pd.read_parquet(preprocessed_dataset.path)
 
     # 2. Split features and target
@@ -38,12 +37,12 @@ def train_model(
 
     model_instance.fit(X, y)
 
-    # 4. Evaluation (Basic internal check)
+    # 4. Internal Training Check
     y_pred = model_instance.predict(X)
-    acc = accuracy_score(y, y_pred)
+    train_acc = accuracy_score(y, y_pred)
     
-    # Log to Vertex AI Metrics artifact
-    metrics.log_metric("accuracy", float(acc))
+    # Log for Experiment Tracking
+    metrics.log_metric("training_accuracy", float(train_acc))
     metrics.log_metric("n_estimators", n_estimators)
 
     # 5. Feature importance
@@ -51,13 +50,14 @@ def train_model(
     feature_imp = pd.DataFrame({"feature": X.columns, "importance": importance})
     top_5 = feature_imp.sort_values(by="importance", ascending=False)["feature"].head(5).tolist()
 
-    # 6. Save outputs
-    suffix = ".joblib"
-    joblib.dump(model_instance, model.path + suffix)
+    # 6. Save outputs as .pkl
+    model_file_path = model.path + ".pkl" 
+    with open(model_file_path, "wb") as f:
+        pickle.dump(model_instance, f)
     
-    # Save metadata to the Model artifact
+    # Save metadata for the Model Registry
     model.metadata["framework"] = "scikit-learn"
     model.metadata["top_5_features"] = top_5
     model.metadata["columns"] = X.columns.tolist()
 
-    print(f"Model saved with accuracy: {acc}")
+    print(f"Model saved. Training Accuracy: {train_acc}")
