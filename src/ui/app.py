@@ -2,6 +2,7 @@ import pickle
 
 import pandas as pd
 import spotipy
+import uvicorn
 from fastapi import FastAPI, HTTPException
 from spotipy.oauth2 import SpotifyClientCredentials
 
@@ -45,7 +46,7 @@ def fetch_features_from_spotify(track_input: str):
 
 @app.get("/")
 def home():
-    return{"Homepage of Spotify Hit Predictor"} #   return render_template("homepage.html")
+    return {"message": "Homepage of Spotify Hit Predictor"} #   return render_template("homepage.html")
 
 
 @app.get("/features")
@@ -123,4 +124,4 @@ def get_all_past_predictions():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    uvicorn.run("app:app", host="0.0.0.0", port=8080, reload=True)

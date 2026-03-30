@@ -7,3 +7,5 @@ uv venv --python 3.12
 
 # install from requirements.txt
 uv pip install -r requirements.txt
+
+uv run uvicorn app:app --host 0.0.0.0 --port 8080 --reload
