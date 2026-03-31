@@ -3,50 +3,70 @@ from spotipy.oauth2 import SpotifyClientCredentials
 from google.cloud import aiplatform
 from .config import Config
 
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
+
+
 class SpotifyService:
     def __init__(self):
-        auth_manager = SpotifyClientCredentials(
-            client_id=Config.CLIENT_ID, 
-            client_secret=Config.CLIENT_SECRET
-        )
-        self.sp = spotipy.Spotify(auth_manager=auth_manager)
+        cid = Config.SPOTIFY_CLIENT_ID
+        secret = Config.SPOTIFY_CLIENT_SECRET
 
-    def get_features(self, query: str):
-        # --- MOCK LOGIC FOR TESTING ---
-        if query == "MOCK_HIT":
-            return {
-                "danceability": 0.8, "energy": 0.9, "key": 1, "loudness": -4.0,
-                "mode": 1, "speechiness": 0.05, "acousticness": 0.1,
-                "instrumentalness": 0.0, "liveness": 0.2, "valence": 0.9, "tempo": 125,
-                "duration_ms": 210000, "time_signature": 4 
-            }
-        
-        if query == "MOCK_FLOP":
-            return {
-                "danceability": 0.2, "energy": 0.1, "key": 0, "loudness": -25.0,
-                "mode": 0, "speechiness": 0.9, "acousticness": 0.9,
-                "instrumentalness": 0.9, "liveness": 0.8, "valence": 0.1, "tempo": 60,
-                "duration_ms": 180000, "time_signature": 3
-            }
-        # --- END MOCK LOGIC ---
+        print("🚀 Initializing SpotifyService...")
+
+        self.auth_manager = SpotifyClientCredentials(
+            client_id=cid,
+            client_secret=secret
+        )
 
         try:
-            # Check if it's a direct URL
-            if "spotify.com" in query:
-                track_id = query.split("/")[-1].split("?")[0]
-            else:
-                results = self.sp.search(q=query, limit=1, type='track')
-                if not results['tracks']['items']:
-                    return None
-                track_id = results['tracks']['items'][0]['id']
-            
-            features = self.sp.audio_features(track_id)
-            return features[0] if features else None
-            
+            token = self.auth_manager.get_access_token(as_dict=False)
+            print("✅ Spotify token OK:", token[:20], "...")
         except Exception as e:
-            # If Spotify fails (like the 403 error), we catch it here
-            print(f"Spotify API Error: {e}")
-            return None
+            raise Exception(f"Spotify AUTH FAILED: {e}")
+
+        self.sp = spotipy.Spotify(auth_manager=self.auth_manager)
+
+    def get_features(self, query: str):
+        print(f"🔎 Query received: {query}")
+
+        try:
+            # Case 1: direct Spotify track URL
+            if "spotify.com/track/" in query:
+                track_id = query.split("track/")[-1].split("?")[0]
+                print(f"🎯 Extracted track_id: {track_id}")
+
+            # Case 2: search by name
+            else:
+                print("📡 Searching track on Spotify...")
+                results = self.sp.search(q=query, limit=1, type='track')
+
+                if not results or not results.get('tracks', {}).get('items'):
+                    raise ValueError("Track not found")
+
+                track = results['tracks']['items'][0]
+                track_id = track['id']
+
+                print(f"✅ Found track: {track['name']} - {track['artists'][0]['name']}")
+
+            # Get audio features
+            print("🎧 Fetching audio features...")
+            features = self.sp.audio_features(track_id)
+
+            if not features or features[0] is None:
+                raise ValueError("Audio features not available")
+
+            print("✅ Features retrieved")
+            return features[0]
+
+        except ValueError as ve:
+            # Expected errors (clean API response)
+            return {"error": str(ve)}
+
+        except Exception as e:
+            # REAL errors (auth, network, etc.)
+            print(f"🚨 Spotify API ERROR: {e}")
+            raise Exception(f"Spotify API failure: {e}")
 
 class PredictionService:
     def __init__(self):
