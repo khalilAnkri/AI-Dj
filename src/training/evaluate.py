@@ -10,7 +10,8 @@ Team AI-DJ :
 """
 
 import numpy as np
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.metrics import (accuracy_score, f1_score, precision_score,
+                             recall_score)
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 

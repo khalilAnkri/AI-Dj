@@ -1,5 +1,7 @@
-from kfp.dsl import component, Input, Output, Model, Dataset, Metrics
+from kfp.dsl import Dataset, Input, Metrics, Model, Output, component
+
 from src.pipelines.config import BASE_IMAGE
+
 
 @component(
     base_image=BASE_IMAGE,
@@ -11,14 +13,16 @@ from src.pipelines.config import BASE_IMAGE
 )
 def evaluate_model(
     model: Input[Model],
-    preprocessed_dataset: Input[Dataset], 
-    metrics: Output[Metrics], 
+    preprocessed_dataset: Input[Dataset],
+    metrics: Output[Metrics],
 ):
-    import pandas as pd
-    import pickle  
-    from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+    import pickle
 
-    # 1. Load the TEST data 
+    import pandas as pd
+    from sklearn.metrics import (accuracy_score, f1_score, precision_score,
+                                 recall_score)
+
+    # 1. Load the TEST data
     df = pd.read_parquet(preprocessed_dataset.path)
     X = df.drop(columns=["hit"])
     y = df["hit"]

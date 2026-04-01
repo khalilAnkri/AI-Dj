@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
-from .services import SpotifyService, PredictionService
-from .config import Config
+
+from .services import PredictionService, SpotifyService
 
 app = FastAPI(title="Spotify Hit Predictor (Vertex AI Edition)")
 
@@ -35,7 +35,7 @@ async def predict(data: dict):
         "id": len(history),
         "query": query,
         "prediction": result["class_name"],
-        "confidence": result.get("confidence", "N/A") 
+        "confidence": result.get("confidence", "N/A")
     }
     history.append(response)
     return response
@@ -66,7 +66,7 @@ async def predict_manual(data: dict):
     try:
         # Pass the dictionary directly to the prediction service
         result = prediction_service.predict_manually(data)
-        
+
         response = {
             "id": len(history),
             "source": "manual_input",
@@ -74,9 +74,9 @@ async def predict_manual(data: dict):
             "class_index": result["class_index"],
             "features_received": data
         }
-        
+
         history.append(response)
         return response
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Vertex AI Error: {str(e)}")
