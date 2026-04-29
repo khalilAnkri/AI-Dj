@@ -1,0 +1,31 @@
+# Dockerfile for the Lab 9 agent API (Flask + gunicorn).
+# Built separately from the main FastAPI Dockerfile so the two services
+# can coexist in this repo.
+#
+# Build:   docker build --platform linux/amd64 -f Dockerfile.agent -t agent-api:latest .
+# Run:     docker run -p 8080:8080 \
+#              -v $HOME/.config/gcloud/application_default_credentials.json:/tmp/adc.json \
+#              -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/adc.json \
+#              agent-api:latest
+
+FROM mirror.gcr.io/library/python:3.12-slim
+
+WORKDIR /app
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Install dependencies from the lockfile
+COPY pyproject.toml uv.lock ./
+RUN uv export --frozen --no-dev --no-hashes -o /tmp/requirements.txt && \
+    uv pip install --system -r /tmp/requirements.txt
+
+# Application code + knowledge base
+COPY src/ ./src/
+COPY kb/ ./kb/
+
+ENV PORT=8080
+EXPOSE 8080
+
+# --timeout 120 because agent loops can take 10-30s per request
+CMD ["gunicorn", "--bind", ":8080", "--workers", "1", "--threads", "4", "--timeout", "120", "src.app:app"]

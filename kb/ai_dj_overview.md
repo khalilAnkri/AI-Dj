@@ -1,0 +1,37 @@
+# AI-DJ Project Overview
+
+AI-DJ is a Spotify Hit Predictor built as part of the ULiège INFO9023 MLOps course.
+The project takes raw Spotify track audio features and predicts whether a track is
+likely to become a "hit" (popularity score >= 65 on Spotify's 0-100 popularity index).
+
+## Goal
+
+Given a candidate track described by its audio features (danceability, energy,
+valence, tempo, acousticness, instrumentalness, speechiness, liveness, loudness,
+duration, key, mode, time_signature), output a binary prediction:
+
+- `1` (hit) if Spotify popularity is expected to be >= 65
+- `0` (flop) otherwise
+
+## Dataset
+
+The training dataset contains 114,000 Spotify tracks across 125 genres and 21
+variables. The target variable `popularity` is binarized using the threshold
+`popularity >= 65 -> hit = 1`. With this threshold the dataset is heavily
+imbalanced: only 9,477 tracks (8.31%) are labelled as hits.
+
+## Variables
+
+The 21 columns split into three groups:
+
+1. Identifiers: `track_id`, `artists`, `album_name`, `track_name`, `track_genre`.
+2. Target: `popularity` (continuous), binarized to `hit`.
+3. Audio features: `danceability`, `energy`, `valence`, `tempo`, `loudness`,
+   `acousticness`, `instrumentalness`, `speechiness`, `liveness`, `duration_ms`,
+   `key`, `mode`, `time_signature`, `explicit`.
+
+## Stakeholders
+
+- Producers and indie artists who want a quick second opinion on a track.
+- Playlist curators looking for early signals of mainstream potential.
+- Music researchers studying what audio features correlate with mass appeal.

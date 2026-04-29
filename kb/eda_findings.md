@@ -1,0 +1,41 @@
+# Exploratory Data Analysis Findings
+
+## Class imbalance
+
+After binarizing `popularity >= 65 -> hit = 1`, only 8.31% of the 114,000 tracks
+are hits (9,477 hits vs 104,523 flops). Every modelling decision in the project
+is driven by this imbalance: stratified train/test split, stratified k-fold
+cross-validation, F1-score as the evaluation metric, and class weighting where
+the algorithm supports it.
+
+## Missingness
+
+The dataset is essentially complete. A single observation has missing
+`artists`, `album_name`, and `track_name`. Since these are identifiers and not
+used as model inputs, the row is kept.
+
+## Correlation structure
+
+The correlation matrix between audio features is mostly weak. The two most
+extreme pairwise correlations are 0.76 and -0.73; the rest are low positive or
+negative coefficients. This means the audio features carry largely
+non-redundant information.
+
+## PCA
+
+A PCA on the non-categorical, non-identifier features shows that the first
+three principal components explain only 0.28, 0.15 and 0.12 of the variance
+respectively (55% combined). The data does not compress well into 2 or 3
+components, so the predictive signal is spread across many features rather
+than concentrated in a few directions. This is a strong argument against
+heavy dimensionality reduction before training.
+
+## Implications for modelling
+
+- Use stratified resampling everywhere because of the 8.31% / 91.69% imbalance.
+- Prefer F1 (harmonic mean of precision and recall) over accuracy because
+  accuracy is misleading on imbalanced data.
+- Scale features before distance-based methods (KNN) because audio features
+  live on very different scales (ms, dB, [0,1]).
+- Do not rely on aggressive PCA: variance is not concentrated, so cutting
+  components throws away signal.
