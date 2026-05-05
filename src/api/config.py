@@ -17,8 +17,7 @@ class Config:
  
     CLASSES       = ["Flop", "Hit"]
     MODEL_COLUMNS = [
-        "danceability", "energy", "key", "loudness", "mode",
-        "speechiness", "acousticness", "instrumentalness",
-        "liveness", "valence", "tempo",
-        "duration_ms", "time_signature"
+        "duration_ms", "danceability", "energy", "key", "loudness",
+        "mode", "speechiness", "acousticness", "instrumentalness",
+        "liveness", "valence", "tempo", "time_signature"
     ]

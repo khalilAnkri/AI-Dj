@@ -13,7 +13,7 @@ def call_predict(query: str) -> dict:
         r.raise_for_status()
         return r.json()
     except requests.exceptions.ConnectionError:
-        st.error("❌ Cannot connect to the API. Make sure the FastAPI server is running on port 8080.")
+        st.error("❌ Cannot connect to the API. Make sure the FastAPI server is running on port 8000.")
         return {}
     except Exception as e:
         st.error(f"❌ API error: {e}")

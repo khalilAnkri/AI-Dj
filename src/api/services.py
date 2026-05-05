@@ -13,7 +13,6 @@ Team AI-DJ:
 """
 
 import os
-import pickle
 
 import requests
 
@@ -24,22 +23,12 @@ from .config import Config
 # ---------------------------------------------------------------------------
 MUSICAE_URL = "https://spotify-extended-audio-features-api.p.rapidapi.com/v1/audio-features/{track_id}"
 MUSICAE_HOST = "spotify-extended-audio-features-api.p.rapidapi.com"
-REQUEST_TIMEOUT = 8
+REQUEST_TIMEOUT = 30
 
 # ---------------------------------------------------------------------------
 # Spotify oEmbed — free, no auth, returns track name + artist + thumbnail
 # ---------------------------------------------------------------------------
 OEMBED_URL = "https://open.spotify.com/oembed?url=https://open.spotify.com/track/{track_id}"
-
-# ---------------------------------------------------------------------------
-# Paths to pkl files
-# ---------------------------------------------------------------------------
-_HERE = os.path.dirname(os.path.abspath(__file__))
-_TRAINING_DIR = os.path.join(_HERE, "..", "training")
-
-MODEL_PATH   = os.path.join(_TRAINING_DIR, "model.pkl")
-COLUMNS_PATH = os.path.join(_TRAINING_DIR, "columns.pkl")
-TOP5_PATH    = os.path.join(_TRAINING_DIR, "top_5.pkl")
 
 
 class SpotifyService:
@@ -75,7 +64,7 @@ class SpotifyService:
                 "x-rapidapi-key": self.api_key,
                 "x-rapidapi-host": MUSICAE_HOST,
             }
-            response = requests.get(url, headers=headers, timeout=5)
+            response = requests.get(url, headers=headers, timeout=30)
             if response.ok:
                 data = response.json()
                 artists = data.get("artists", [])
@@ -163,63 +152,62 @@ class SpotifyService:
 
 class PredictionService:
     """
-    Local inference using model.pkl.
-    Returns prediction, both class probabilities, and top 5 feature values.
+    Vertex AI Endpoint inference.
+    Calls the deployed sklearn model on Vertex AI and returns prediction,
+    both class probabilities, and top 5 feature values.
     """
 
+    # Top 5 most important features confirmed from Vertex AI Model Registry
+    TOP_5_FEATURES = ["acousticness", "energy", "loudness", "valence", "instrumentalness"]
+
     def __init__(self):
-        for path in [MODEL_PATH, COLUMNS_PATH, TOP5_PATH]:
-            if not os.path.exists(path):
-                raise Exception(
-                    f"{os.path.basename(path)} not found at {path}. "
-                    "Run src/training/train.py first."
-                )
+        from google.cloud import aiplatform
 
-        with open(MODEL_PATH, "rb") as f:
-            self.model = pickle.load(f)
-        with open(COLUMNS_PATH, "rb") as f:
-            self.columns = pickle.load(f)
-        with open(TOP5_PATH, "rb") as f:
-            self.top_5 = pickle.load(f)
+        project_id  = Config.PROJECT_ID
+        location    = Config.LOCATION
+        endpoint_id = Config.ENDPOINT_ID
 
-        print("PredictionService (local mode) initialized.")
-        print(f"Columns: {self.columns}")
-        print(f"Top 5 features: {self.top_5}")
+        if not all([project_id, location, endpoint_id]):
+            raise Exception(
+                "Missing Vertex AI config. Ensure GCP_PROJECT_ID, GCP_LOCATION, "
+                "and VERTEX_ENDPOINT_ID are set in your .env file."
+            )
+
+        aiplatform.init(project=project_id, location=location)
+
+        self.endpoint = aiplatform.Endpoint(
+            endpoint_name=f"projects/{project_id}/locations/{location}/endpoints/{endpoint_id}"
+        )
+        self.columns = Config.MODEL_COLUMNS
+
+        print("PredictionService (Vertex AI mode) initialized.")
+        print(f"Endpoint: {endpoint_id}")
+        print(f"Columns : {self.columns}")
 
     def predict(self, features: dict) -> dict:
-        """
-        Returns:
-          - class_index        : 0 or 1
-          - class_name         : "Flop" or "Hit"
-          - hit_probability    : probability of being a Hit (0.0 - 1.0)
-          - flop_probability   : probability of being a Flop (0.0 - 1.0)
-          - confidence         : probability of the predicted class
-          - top_features       : top 5 feature names → values from this track
-        """
         try:
-            input_data = [[float(features.get(col, 0)) for col in self.columns]]
-            pred_index = int(self.model.predict(input_data)[0])
-            proba      = self.model.predict_proba(input_data)[0]
+            instance = [float(features.get(col, 0)) for col in self.columns]
+            print(f"Sending instance to Vertex AI: {instance}")
 
-            hit_prob  = round(float(proba[1]), 4)
-            flop_prob = round(float(proba[0]), 4)
-            confidence = round(float(proba[pred_index]), 4)
+            response = self.endpoint.predict(instances=[instance])
+            print(f"Raw predict response: {response.predictions}")
+
+            pred_raw   = response.predictions[0]
+            pred_index = int(pred_raw) if not isinstance(pred_raw, list) else int(pred_raw[0])
 
             top_features = {
                 feat: round(float(features.get(feat, 0)), 4)
-                for feat in self.top_5
+                for feat in self.TOP_5_FEATURES
             }
 
             return {
-                "class_index":      pred_index,
-                "class_name":       Config.CLASSES[pred_index],
-                "hit_probability":  hit_prob,
-                "flop_probability": flop_prob,
-                "confidence":       confidence,
-                "top_features":     top_features,
+                "class_index":  pred_index,
+                "class_name":   Config.CLASSES[pred_index],
+                "confidence":   1.0,
+                "top_features": top_features,
             }
         except Exception as e:
-            print(f"Local prediction error: {e}")
+            print(f"Vertex AI prediction error: {e}")
             raise e
 
     def predict_manually(self, features: dict) -> dict:
@@ -322,8 +310,8 @@ class ExplanationService:
         if supporting:
             drivers = ", ".join(supporting[:3])
             sentence1 = (
-                f'"{track_name}" by {artist} was predicted as a {prediction} '
-                f"with {confidence_pct}% confidence, primarily driven by its {drivers}."
+                f'"{track_name}" by {artist} was predicted as a {prediction} ,'
+                f" primarily driven by its {drivers}."
             )
         else:
             sentence1 = (
@@ -365,38 +353,47 @@ class RecommendationService:
             raise Exception("RAPIDAPI_KEY is not set.")
         print("RecommendationService (Musicae/RapidAPI) initialized.")
 
-    def get_recommendations(self, track_id: str, artist_id: str = "", limit: int = 5) -> list:
+    def get_recommendations(self, track_id: str, artist_id: str = "", audio_features: dict = {}, limit: int = 5) -> list:
         """
-        Returns a list of recommended tracks based on the seed track_id + artist_id.
+        Returns a list of recommended tracks based on the seed track_id + artist_id
+        and target audio features for better similarity matching.
         Each item contains: track_name, artist, spotify_url, thumbnail.
         Returns empty list on failure — recommendations are non-critical.
         """
         headers = {
-            "x-rapidapi-key": self.api_key,
+            "x-rapidapi-key":  self.api_key,
             "x-rapidapi-host": self.HOST,
         }
         params = {
-            "seed_tracks":  track_id,
-            "limit":        limit,
-            "market":       "US",
+            "seed_tracks":         track_id,
+            "seed_artists":        artist_id,
+            "limit":               limit,
+            "market":              "FR",
+            "seed_genres":         "pop" ,
+            "target_energy":       audio_features.get("energy"),
+            "target_danceability": audio_features.get("danceability"),
+            "target_valence":      audio_features.get("valence"),
+            "target_tempo":        audio_features.get("tempo"),
+            "target_acousticness": audio_features.get("acousticness"),
         }
-        if artist_id:
-            params["seed_artists"] = artist_id
+        # Remove None values to avoid sending empty params
+        params = {k: v for k, v in params.items() if v is not None}
 
         try:
             response = requests.get(
                 self.RECOMMENDATIONS_URL,
                 headers=headers,
                 params=params,
-                timeout=8,
+                timeout=30,
             )
         except Exception as e:
             print(f"RecommendationService request failed (non-critical): {e}")
             return []
-        
+
         if not response.ok:
             print(f"RecommendationService: HTTP {response.status_code} — {response.text[:300]}")
             return []
+
         print(f"Recommendations raw response: {response.text[:500]}")
 
         try:
@@ -405,21 +402,16 @@ class RecommendationService:
             print("RecommendationService: non-JSON response — skipping.")
             return []
 
-        # Musicae mirrors Spotify's response: {"tracks": [...]}
         tracks = data.get("tracks", [])
         recommendations = []
 
         for track in tracks[:limit]:
             track_id_rec = track.get("id", "")
             name         = track.get("name", "Unknown")
-
-            # Artist name — Spotify format: artists is a list of objects
-            artists = track.get("artists", [])
-            artist_name = artists[0].get("name", "Unknown") if artists else "Unknown"
-
-            # Album cover — album.images is a list sorted widest first
-            images = track.get("album", {}).get("images", [])
-            thumbnail = images[0].get("url", "") if images else ""
+            artists      = track.get("artists", [])
+            artist_name  = artists[0].get("name", "Unknown") if artists else "Unknown"
+            images       = track.get("album", {}).get("images", [])
+            thumbnail    = images[0].get("url", "") if images else ""
 
             recommendations.append({
                 "track_name":  name,
