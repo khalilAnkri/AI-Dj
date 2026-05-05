@@ -12,7 +12,7 @@ COPY pyproject.toml .
 # If you have a requirements.txt instead, use: COPY requirements.txt .
 
 # Install dependencies using uv into the system python
-RUN uv pip install --system --no-cache fastapi uvicorn google-cloud-aiplatform spotipy python-dotenv pandas
+RUN uv pip install --system --no-cache fastapi uvicorn google-cloud-aiplatform requests python-dotenv pandas
 
 # Copy the rest of the source code
 COPY . .
