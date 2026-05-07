@@ -1,0 +1,55 @@
+name: Deploy Web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/ui/**"
+      - "Dockerfile"
+      - ".streamlit/**"
+      - "requirements.txt"
+
+jobs:
+  deploy-web:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker gcr.io --quiet
+
+      - name: Build and push image
+        run: |
+          docker build -f Dockerfile \
+            -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/ai-dj-web:${{ github.sha }} \
+            -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/ai-dj-web:latest \
+            .
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/ai-dj-web:${{ github.sha }}
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/ai-dj-web:latest
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ai-dj-web \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/ai-dj-web:${{ github.sha }} \
+            --region ${{ secrets.GCP_LOCATION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 8501 \
+            --set-env-vars "GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},GCP_LOCATION=${{ secrets.GCP_LOCATION }},API_URL=${{ secrets.API_URL }}"
+
+      - name: Verify deployment
+        run: |
+          URL=$(gcloud run services describe ai-dj-web \
+            --region ${{ secrets.GCP_LOCATION }} \
+            --format "value(status.url)")
+          echo "Web URL: $URL"
