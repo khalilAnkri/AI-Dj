@@ -1,0 +1,5 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-f', 'Dockerfile.backend', '-t', 'gcr.io/ai-dj-487610/ai-dj-api', '.']
+images:
+  - 'gcr.io/ai-dj-487610/ai-dj-api'
