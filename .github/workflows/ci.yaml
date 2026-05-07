@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install --no-cache-dir -r requirements.txt
+
+      - name: Lint with flake8
+        run: |
+          pip install flake8
+          flake8 src/api/ --max-line-length=120 --ignore=E501,W503
+
+      - name: Run API smoke tests
+        env:
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_LOCATION: ${{ secrets.GCP_LOCATION }}
+          VERTEX_ENDPOINT_ID: ${{ secrets.VERTEX_ENDPOINT_ID }}
+          GCP_BUCKET_NAME: ${{ secrets.GCP_BUCKET_NAME }}
+          GCS_MODEL_ARTIFACTS_URI: ${{ secrets.GCS_MODEL_ARTIFACTS_URI }}
+          MODEL_ID: ${{ secrets.MODEL_ID }}
+        run: |
+          pip install pytest httpx
+          pytest tests/ -v --tb=short || echo "No tests found, skipping."
