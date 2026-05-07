@@ -4,7 +4,7 @@ config.py — App-wide constants and Streamlit page configuration.
 
 import streamlit as st
 
-API_BASE = "http://localhost:8000"
+API_BASE = "https://ai-dj-api-343602206157.europe-west4.run.app"
 
 
 def setup_page():

@@ -1,25 +1,13 @@
-# Use 3.12 for maximum stability with Vertex AI libraries
-FROM python:3.12-slim
+FROM mirror.gcr.io/library/python:3.11-slim
 
-# Install UV
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-
-# Set working directory
 WORKDIR /app
 
-# Copy dependency files first to cache the 'install' layer
-COPY pyproject.toml .
-# If you have a requirements.txt instead, use: COPY requirements.txt .
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install dependencies using uv into the system python
-RUN uv pip install --system --no-cache fastapi uvicorn google-cloud-aiplatform requests python-dotenv pandas
+COPY src/ ./src/
+COPY .streamlit/ ./.streamlit/
 
-# Copy the rest of the source code
-COPY . .
+ENV PORT=8501
 
-# Cloud Run uses the PORT env variable
-EXPOSE 8080
-
-# The CMD needs to point to the file where 'app = FastAPI()' lives
-# use the API path we built :
-CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
+CMD streamlit run src/ui/app.py --server.port $PORT --server.address=0.0.0.0
