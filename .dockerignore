@@ -10,8 +10,3 @@ docs/
 tests/
 .github/
 infra/
-src/api/
-src/monitoring/
-src/pipelines/
-src/scripts/
-src/training/
