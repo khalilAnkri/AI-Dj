@@ -1,0 +1,251 @@
+name: Deploy Vertex AI Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/pipelines/**"
+      - "pipeline.py"
+      - "requirements.txt"
+  workflow_dispatch:
+    inputs:
+      model_version:
+        description: "Model version tag (e.g. v2)"
+        required: false
+        default: "v1"
+
+jobs:
+  run-vertex-pipeline:
+    runs-on: ubuntu-latest
+
+    env:
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_LOCATION: ${{ secrets.GCP_LOCATION }}
+      GCP_BUCKET_NAME: ${{ secrets.GCP_BUCKET_NAME }}
+
+    steps:
+      # ------------------------------------------------------------------ #
+      # 1 — Checkout & Python setup                                         #
+      # ------------------------------------------------------------------ #
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install --no-cache-dir -r requirements.txt
+
+      # ------------------------------------------------------------------ #
+      # 2 — GCP authentication                                              #
+      # ------------------------------------------------------------------ #
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # ------------------------------------------------------------------ #
+      # 3 — Compile the KFP pipeline to a YAML spec                        #
+      # ------------------------------------------------------------------ #
+      - name: Compile pipeline
+        run: |
+          python - <<'EOF'
+          from kfp import compiler
+          from pipeline import ai_dj_training_workflow
+          compiler.Compiler().compile(
+              pipeline_func=ai_dj_training_workflow,
+              package_path="pipeline_spec.yaml",
+          )
+          print("Pipeline compiled successfully → pipeline_spec.yaml")
+          EOF
+
+      # ------------------------------------------------------------------ #
+      # 4 — Upload compiled spec to GCS (for audit trail & reproducibility) #
+      # ------------------------------------------------------------------ #
+      - name: Upload pipeline spec to GCS
+        run: |
+          gsutil cp pipeline_spec.yaml \
+            gs://${{ secrets.GCP_BUCKET_NAME }}/pipelines/pipeline_spec_${{ github.sha }}.yaml
+
+      # ------------------------------------------------------------------ #
+      # 5 — Submit pipeline run to Vertex AI                               #
+      # ------------------------------------------------------------------ #
+      - name: Submit pipeline run
+        id: submit
+        run: |
+          MODEL_VERSION="${{ github.event.inputs.model_version || 'v1' }}"
+
+          python - <<EOF
+          import json
+          from google.cloud import aiplatform
+
+          aiplatform.init(
+              project="${{ secrets.GCP_PROJECT_ID }}",
+              location="${{ secrets.GCP_LOCATION }}",
+              staging_bucket="gs://${{ secrets.GCP_BUCKET_NAME }}",
+          )
+
+          job = aiplatform.PipelineJob(
+              display_name="ai-dj-training-${{ github.sha }}",
+              template_path="pipeline_spec.yaml",
+              pipeline_root="gs://${{ secrets.GCP_BUCKET_NAME }}/pipeline_runs",
+              parameter_values={
+                  "project_id": "${{ secrets.GCP_PROJECT_ID }}",
+                  "model_version": "${MODEL_VERSION}",
+              },
+              labels={
+                  "git_sha": "${{ github.sha }}",
+                  "triggered_by": "github_actions",
+              },
+          )
+
+          job.submit()
+
+          # Persist the job resource name for the next step
+          with open("pipeline_job_name.txt", "w") as f:
+              f.write(job.resource_name)
+
+          print(f"Pipeline submitted: {job.resource_name}")
+          print(f"Console URL: https://console.cloud.google.com/vertex-ai/locations/${{ secrets.GCP_LOCATION }}/pipelines/runs")
+          EOF
+
+      # ------------------------------------------------------------------ #
+      # 6 — Wait for pipeline completion & enforce quality gate            #
+      # ------------------------------------------------------------------ #
+      - name: Wait for pipeline and enforce quality gate
+        run: |
+          python - <<'EOF'
+          import sys
+          import time
+          from google.cloud import aiplatform
+
+          aiplatform.init(
+              project="${{ secrets.GCP_PROJECT_ID }}",
+              location="${{ secrets.GCP_LOCATION }}",
+          )
+
+          with open("pipeline_job_name.txt") as f:
+              job_name = f.read().strip()
+
+          job = aiplatform.PipelineJob.get(resource_name=job_name)
+
+          print(f"Waiting for pipeline: {job_name}")
+          poll_interval = 60  # seconds
+          timeout = 7200      # 2 hours max
+
+          elapsed = 0
+          while elapsed < timeout:
+              job.refresh()
+              state = job.state.name
+              print(f"[{elapsed}s] Pipeline state: {state}")
+
+              if state == "PIPELINE_STATE_SUCCEEDED":
+                  print("Pipeline completed successfully — quality gate passed.")
+                  sys.exit(0)
+              elif state in (
+                  "PIPELINE_STATE_FAILED",
+                  "PIPELINE_STATE_CANCELLED",
+              ):
+                  print(f"Pipeline ended with state: {state}")
+                  print("Quality gate FAILED — model did not meet accuracy threshold or pipeline errored.")
+                  sys.exit(1)
+
+              time.sleep(poll_interval)
+              elapsed += poll_interval
+
+          print("Timed out waiting for pipeline to complete.")
+          sys.exit(1)
+          EOF
+
+      # ------------------------------------------------------------------ #
+      # 7 — Extract new model ID and endpoint ID from Vertex AI            #
+      # ------------------------------------------------------------------ #
+      - name: Extract new model and endpoint IDs
+        id: extract_ids
+        if: success()
+        run: |
+          python - <<'EOF'
+          import sys
+          from google.cloud import aiplatform
+
+          aiplatform.init(
+              project="${{ secrets.GCP_PROJECT_ID }}",
+              location="${{ secrets.GCP_LOCATION }}",
+          )
+
+          # Get the latest registered model version by display name
+          models = aiplatform.Model.list(
+              filter='display_name="spotify-hit-predictor"',
+              order_by="create_time desc",
+          )
+          if not models:
+              print("ERROR: No model found with display_name 'spotify-hit-predictor'")
+              sys.exit(1)
+
+          latest_model = models[0]
+          model_id = latest_model.resource_name.split("/")[-1]
+
+          # Get the endpoint by display name
+          endpoints = aiplatform.Endpoint.list(
+              filter='display_name="spotify-hit-predictor-endpoint"',
+          )
+          if not endpoints:
+              print("ERROR: No endpoint found with display_name 'spotify-hit-predictor-endpoint'")
+              sys.exit(1)
+
+          endpoint_id = endpoints[0].resource_name.split("/")[-1]
+
+          # Write to GitHub Actions output
+          import os
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"model_id={model_id}\n")
+              f.write(f"endpoint_id={endpoint_id}\n")
+
+          print(f"Extracted MODEL_ID={model_id}")
+          print(f"Extracted VERTEX_ENDPOINT_ID={endpoint_id}")
+          EOF
+
+      # ------------------------------------------------------------------ #
+      # 8 — Trigger API redeploy with updated model and endpoint IDs       #
+      # ------------------------------------------------------------------ #
+      - name: Trigger API redeploy
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const modelId = "${{ steps.extract_ids.outputs.model_id }}";
+            const endpointId = "${{ steps.extract_ids.outputs.endpoint_id }}";
+
+            if (!modelId || !endpointId) {
+              core.setFailed("Missing model_id or endpoint_id — cannot trigger API redeploy.");
+              return;
+            }
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: "deploy-api.yaml",
+              ref: "main",
+              inputs: {
+                model_id: modelId,
+                endpoint_id: endpointId,
+              },
+            });
+
+            console.log(`Triggered deploy-api.yaml with MODEL_ID=${modelId}, VERTEX_ENDPOINT_ID=${endpointId}`);
+
+      # ------------------------------------------------------------------ #
+      # 9 — Notify on failure                                              #
+      # ------------------------------------------------------------------ #
+      - name: Notify on pipeline failure
+        if: failure()
+        run: |
+          echo "::error::Vertex AI pipeline failed or did not pass quality gate."
+          echo "::error::Check the Vertex AI console for details."
+          echo "::error::Git SHA: ${{ github.sha }}"

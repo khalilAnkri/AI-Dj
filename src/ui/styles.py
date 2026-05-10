@@ -5,6 +5,7 @@ Pixel-perfect match to the reference HTML design spec.
 
 import base64
 import os
+
 import streamlit as st
 
 
@@ -41,7 +42,8 @@ html {{
 
 def inject_css():
     st.markdown(_bg_css(), unsafe_allow_html=True)
-    st.markdown("""
+    st.markdown(
+        """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap');
 
@@ -367,10 +369,13 @@ hr { border-color: var(--border) !important; }
     font-size: 12px !important;
 }
 </style>
-""", unsafe_allow_html=True)
+""",
+        unsafe_allow_html=True,
+    )
 
     # Second injection — loads AFTER Streamlit's internal theme so it wins
-    st.markdown("""
+    st.markdown(
+        """
 <style>
 div[data-testid="stSegmentedControl"] {
     display: flex !important;
@@ -440,4 +445,6 @@ div[data-testid="stSegmentedControl"] button[aria-checked="false"] span {
     color: var(--muted) !important;
 }
 </style>
-""", unsafe_allow_html=True)
+""",
+        unsafe_allow_html=True,
+    )

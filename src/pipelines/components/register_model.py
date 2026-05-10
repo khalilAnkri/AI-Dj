@@ -1,4 +1,4 @@
-from kfp.dsl import Input, Model, Output, Metrics, component
+from kfp.dsl import Input, Metrics, Model, Output, component
 
 from src.pipelines.config import BASE_IMAGE
 
@@ -8,7 +8,7 @@ from src.pipelines.config import BASE_IMAGE
     packages_to_install=[
         "google-cloud-aiplatform",
         "google-cloud-storage",
-    ]
+    ],
 )
 def register_model(
     model: Input[Model],
@@ -29,7 +29,9 @@ def register_model(
 
     # 1. Quality gate — read the test accuracy logged by evaluate_model
     test_accuracy = metrics.metadata.get("test_accuracy", 0.0)
-    print(f"Quality gate check: test_accuracy={test_accuracy:.4f} (threshold={accuracy_threshold})")
+    print(
+        f"Quality gate check: test_accuracy={test_accuracy:.4f} (threshold={accuracy_threshold})"
+    )
 
     if test_accuracy < accuracy_threshold:
         raise ValueError(
@@ -40,15 +42,14 @@ def register_model(
 
     print(f"Quality gate PASSED. Registering model '{model_display_name}'...")
 
-    # 2. KFP saves the model 
+    # 2. KFP saves the model
 
-
-    source_uri = model.uri + ".pkl"   
+    source_uri = model.uri + ".pkl"
     bucket_name = source_uri.split("/")[2]
-    source_blob  = "/".join(source_uri.split("/")[3:])
+    source_blob = "/".join(source_uri.split("/")[3:])
 
     staging_blob = f"model_staging/{model_display_name}/model.pkl"
-    staging_uri  = f"gs://{bucket_name}/model_staging/{model_display_name}"
+    staging_uri = f"gs://{bucket_name}/model_staging/{model_display_name}"
 
     print(f"Copying {source_uri}  →  gs://{bucket_name}/{staging_blob}")
     gcs_client = storage.Client(project=project_id)
@@ -72,7 +73,7 @@ def register_model(
         },
     )
 
-    print(f"Model registered successfully.")
+    print("Model registered successfully.")
     print(f"Resource name : {vertex_model.resource_name}")
     print(f"Model ID      : {vertex_model.name}")
 

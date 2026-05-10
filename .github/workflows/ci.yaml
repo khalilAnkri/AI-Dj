@@ -5,6 +5,7 @@ on:
     branches: ["**"]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   lint-and-test:
@@ -23,10 +24,11 @@ jobs:
       - name: Install dependencies
         run: pip install --no-cache-dir -r requirements.txt
 
-      - name: Lint with flake8
+      - name: Lint and format check with Ruff
         run: |
-          pip install flake8
-          flake8 src/api/ --max-line-length=120 --ignore=E501,W503,E221,E241,E251,E302,E303,W292,W293,E203,F401,F841
+          pip install ruff
+          ruff check .
+          ruff format --check .
 
       - name: Run API smoke tests
         env:

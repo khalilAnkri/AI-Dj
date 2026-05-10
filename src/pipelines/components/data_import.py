@@ -5,12 +5,7 @@ from src.pipelines.config import BASE_IMAGE
 
 @component(
     base_image=BASE_IMAGE,
-    packages_to_install=[
-        "pandas",
-        "pyarrow",
-        "google-cloud-bigquery",
-        "db-dtypes"
-    ]
+    packages_to_install=["pandas", "pyarrow", "google-cloud-bigquery", "db-dtypes"],
 )
 def import_bigquery(
     output_dataset: Output[Dataset],
@@ -34,10 +29,10 @@ def import_bigquery(
     print(f"Query successful. Retrieved {len(df)} rows.")
 
     # 3. Explicitly use pyarrow engine and ensure path is handled
-    df.to_parquet(output_dataset.path, engine='pyarrow', index=False)
+    df.to_parquet(output_dataset.path, engine="pyarrow", index=False)
 
     # 4. Metadata for the Vertex UI
-    output_dataset.metadata['row_count'] = len(df)
-    output_dataset.metadata['source'] = 'BigQuery'
+    output_dataset.metadata["row_count"] = len(df)
+    output_dataset.metadata["source"] = "BigQuery"
 
     print(f"Dataset saved to {output_dataset.path}")

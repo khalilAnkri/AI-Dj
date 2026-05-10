@@ -8,10 +8,11 @@ Team AI-DJ :
     - Mohamed-Khalil Ankri
     - Paulis Antoine
 """
-import sys
-import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'training'))
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src", "training"))
 from importDataset import importBigQuerry
 from trainingPreprocess import trainingPreprocess
 
@@ -23,10 +24,22 @@ def test_trainingPreprocess():
     """
 
     df = importBigQuerry()
-    X,y = trainingPreprocess(df)
-    XColumns = ["duration_ms","danceability","energy","key","loudness","mode",
-               "speechiness","acousticness","instrumentalness","liveness","valence","tempo",
-               "time_signature"]
+    X, y = trainingPreprocess(df)
+    XColumns = [
+        "duration_ms",
+        "danceability",
+        "energy",
+        "key",
+        "loudness",
+        "mode",
+        "speechiness",
+        "acousticness",
+        "instrumentalness",
+        "liveness",
+        "valence",
+        "tempo",
+        "time_signature",
+    ]
 
     for column in XColumns:
         assert column in X.columns

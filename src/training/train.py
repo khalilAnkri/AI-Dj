@@ -9,15 +9,15 @@ df = importBigQuerry()
 
 X, y = trainingPreprocess(df)
 
-model = RandomForestClassifier(n_estimators=100, max_depth=None,
-                               random_state=42, class_weight="balanced")
+model = RandomForestClassifier(
+    n_estimators=100, max_depth=None, random_state=42, class_weight="balanced"
+)
 
-model.fit(X,y) # Evaluation separated in another file
+model.fit(X, y)  # Evaluation separated in another file
 
 importance = model.feature_importances_
 
-featureImportance = pd.DataFrame({ "feature": X.columns,
-                                   "importance": importance})
+featureImportance = pd.DataFrame({"feature": X.columns, "importance": importance})
 
 featureImportance = featureImportance.sort_values(by="importance", ascending=False)
 

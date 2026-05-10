@@ -8,12 +8,14 @@ Team AI-DJ :
     - Mohamed-Khalil Ankri
     - Paulis Antoine
 """
-import sys
-import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'training'))
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src", "training"))
 
 from evaluate import metricsEval
+
 
 def test_metricsEval():
     """
@@ -43,7 +45,7 @@ def test_metricsEval():
     N = TN + FP
 
     # Number of good predictions over the total number
-    accuracy = (TP+TN)/(P+N)
+    accuracy = (TP + TN) / (P + N)
 
     # Proportion of positives that are detected
     recall = TP / (TP + FN)
@@ -51,7 +53,7 @@ def test_metricsEval():
     # Porportion of good predictions among all the positive predictions
     precision = TP / (TP + FP)
 
-    f1 = 2*(precision*recall)/(precision+recall)
+    f1 = 2 * (precision * recall) / (precision + recall)
 
     accuracyFct, recallFct, f1Fct, precisionFct = metricsEval(yValFold, yPred)
 

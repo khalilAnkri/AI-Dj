@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-
 # --- GCP Core ---
 BASE_IMAGE = "python:3.10"
 PROJECT_ID = os.getenv("GCP_PROJECT_ID")
@@ -28,8 +27,7 @@ SERVING_CONTAINER_URI = (
 
 
 GCS_MODEL_ARTIFACTS_URI = os.getenv(
-    "GCS_MODEL_ARTIFACTS_URI",
-    f"gs://{BUCKET_NAME}/pipeline_root"
+    "GCS_MODEL_ARTIFACTS_URI", f"gs://{BUCKET_NAME}/pipeline_root"
 )
 
 

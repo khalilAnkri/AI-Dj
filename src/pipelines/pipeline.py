@@ -1,19 +1,19 @@
 from kfp import dsl
 
 from src.pipelines.components.data_import import import_bigquery
+from src.pipelines.components.deploy_model import deploy_model
 from src.pipelines.components.evaluation import evaluate_model
 from src.pipelines.components.preprocessing import training_preprocess
-from src.pipelines.components.training import train_model
 from src.pipelines.components.register_model import register_model
-from src.pipelines.components.deploy_model import deploy_model
+from src.pipelines.components.training import train_model
 from src.pipelines.config import (
+    ACCURACY_THRESHOLD,
+    ENDPOINT_DISPLAY_NAME,
+    MODEL_DISPLAY_NAME,
     PIPELINE_NAME,
     PROJECT_ID,
     REGION,
-    MODEL_DISPLAY_NAME,
-    ENDPOINT_DISPLAY_NAME,
     SERVING_CONTAINER_URI,
-    ACCURACY_THRESHOLD,
 )
 
 
@@ -68,7 +68,7 @@ def ai_dj_training_workflow(
     # ------------------------------------------------------------------ #
     # Step 6 — Deploy model to Vertex AI Endpoint                        #
     # ------------------------------------------------------------------ #
-    deploy_task = deploy_model(
+    deploy_model(
         registered_model=register_task.outputs["registered_model"],
         project_id=project_id,
         location=REGION,

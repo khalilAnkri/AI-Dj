@@ -1,8 +1,9 @@
-
 import os
+
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -11,29 +12,40 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 # ── Matplotlib dark theme defaults ───────────────────────────────────────────
-plt.rcParams.update({
-    "text.color":       "#4a7060",
-    "axes.labelcolor":  "#4a7060",
-    "xtick.color":      "#4a7060",
-    "ytick.color":      "#4a7060",
-    "axes.edgecolor":   "#1e3530",
-    "axes.facecolor":   "#0d1a14",
-    "figure.facecolor": "#0a1410",
-    "grid.color":       "#1e3530",
-    "grid.alpha":       0.5,
-    "font.family":      "monospace",
-})
+plt.rcParams.update(
+    {
+        "text.color": "#4a7060",
+        "axes.labelcolor": "#4a7060",
+        "xtick.color": "#4a7060",
+        "ytick.color": "#4a7060",
+        "axes.edgecolor": "#1e3530",
+        "axes.facecolor": "#0d1a14",
+        "figure.facecolor": "#0a1410",
+        "grid.color": "#1e3530",
+        "grid.alpha": 0.5,
+        "font.family": "monospace",
+    }
+)
 
-_HIT_COLORS  = {"Hit": "#2ecc71", "Non-Hit": "#e8365d"}
+_HIT_COLORS = {"Hit": "#2ecc71", "Non-Hit": "#e8365d"}
 _PCA_FEATURES = [
-    "danceability", "energy", "valence", "tempo", "loudness",
-    "speechiness", "acousticness", "instrumentalness", "liveness", "duration_ms",
+    "danceability",
+    "energy",
+    "valence",
+    "tempo",
+    "loudness",
+    "speechiness",
+    "acousticness",
+    "instrumentalness",
+    "liveness",
+    "duration_ms",
 ]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Private helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 @st.cache_data(show_spinner=False)
 def _load_eda_data():
@@ -63,8 +75,8 @@ def _apply_dark_theme(fig, ax_or_axes=None):
 
 def _chart_label(text):
     st.markdown(
-        f'<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;'
-        f'letter-spacing:2px;color:#6aaa8a;text-transform:uppercase;'
+        f"<div style=\"font-family:'JetBrains Mono',monospace;font-size:10px;"
+        f"letter-spacing:2px;color:#6aaa8a;text-transform:uppercase;"
         f'margin-bottom:12px;">{text}</div>',
         unsafe_allow_html=True,
     )
@@ -74,13 +86,14 @@ def _chart_label(text):
 # Analysis sections
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _section_dataset_description(df):
     with st.container(border=True):
         _chart_label("Summary statistics")
         st.dataframe(
-            df.describe().style
-              .format("{:.3f}")
-              .background_gradient(cmap="Greens", axis=None),
+            df.describe()
+            .style.format("{:.3f}")
+            .background_gradient(cmap="Greens", axis=None),
             use_container_width=True,
         )
 
@@ -95,10 +108,17 @@ def _section_dataset_description(df):
             bars = ax.bar(
                 ["Non-Hit", "Hit"],
                 [counts.get(0, 0), counts.get(1, 0)],
-                color=["#e8365d", "#2ecc71"], width=0.5,
+                color=["#e8365d", "#2ecc71"],
+                width=0.5,
             )
-            ax.bar_label(bars, fmt="%d", color="#4a7060",
-                         fontsize=8, padding=4, fontfamily="monospace")
+            ax.bar_label(
+                bars,
+                fmt="%d",
+                color="#4a7060",
+                fontsize=8,
+                padding=4,
+                fontfamily="monospace",
+            )
             ax.set_ylabel("Count")
             _apply_dark_theme(fig, ax)
             st.pyplot(fig, use_container_width=True)
@@ -128,16 +148,22 @@ def _section_correlation_matrix(df):
         fig, ax = plt.subplots(figsize=(6, 4))
         corr = df.corr()
         mask = np.triu(np.ones_like(corr, dtype=bool))
-        cmap = sns.diverging_palette(145, 10, as_cmap=True)   # green ↔ red
+        cmap = sns.diverging_palette(145, 10, as_cmap=True)  # green ↔ red
         sns.heatmap(
-            corr, mask=mask, cmap=cmap, center=0,
-            annot=True, fmt=".2f", annot_kws={"size": 1, "color": "#4a7060"},
-            linewidths=0.4, linecolor="#1e3530",
+            corr,
+            mask=mask,
+            cmap=cmap,
+            center=0,
+            annot=True,
+            fmt=".2f",
+            annot_kws={"size": 1, "color": "#4a7060"},
+            linewidths=0.4,
+            linecolor="#1e3530",
             cbar_kws={"shrink": 0.8},
             ax=ax,
         )
         ax.tick_params(axis="x", rotation=45, labelsize=8)
-        ax.tick_params(axis="y", rotation=0,  labelsize=8)
+        ax.tick_params(axis="y", rotation=0, labelsize=8)
         _apply_dark_theme(fig, ax)
         fig.tight_layout()
         st.pyplot(fig, use_container_width=False)
@@ -146,20 +172,22 @@ def _section_correlation_matrix(df):
 
 def _section_pair_plot(df):
     st.markdown(
-        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;'
+        "<div style=\"font-family:'JetBrains Mono',monospace;font-size:9px;"
         'color:#4a7060;letter-spacing:2px;margin-bottom:16px;">'
-        '⚠ PAIR PLOT IS COMPUTE-HEAVY — may take a few seconds</div>',
+        "⚠ PAIR PLOT IS COMPUTE-HEAVY — may take a few seconds</div>",
         unsafe_allow_html=True,
     )
     with st.container(border=True):
         _chart_label("Pair plot — audio features coloured by hit")
         plot_cols = [c for c in _PCA_FEATURES if c in df.columns][:6]
-        plot_df   = df[plot_cols + ["hit"]].copy()
+        plot_df = df[plot_cols + ["hit"]].copy()
         plot_df["hit"] = plot_df["hit"].map({1: "Hit", 0: "Non-Hit"})
 
         with st.spinner("Rendering pair plot…"):
             g = sns.pairplot(
-                plot_df, hue="hit", corner=True,
+                plot_df,
+                hue="hit",
+                corner=True,
                 palette=_HIT_COLORS,
                 plot_kws={"alpha": 0.3, "s": 6},
                 diag_kws={"fill": True, "alpha": 0.6},
@@ -179,31 +207,40 @@ def _section_pair_plot(df):
 
 def _section_pca_2d(df, explicit_col):
     pca_cols = [c for c in _PCA_FEATURES if c in df.columns]
-    data_sc  = StandardScaler().fit_transform(df[pca_cols])
-    pca2     = PCA(n_components=2)
-    data2d   = pca2.fit_transform(data_sc)
+    data_sc = StandardScaler().fit_transform(df[pca_cols])
+    pca2 = PCA(n_components=2)
+    data2d = pca2.fit_transform(data_sc)
 
     var_exp = pca2.explained_variance_ratio_
     st.markdown(
-        f'<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;'
+        f"<div style=\"font-family:'JetBrains Mono',monospace;font-size:9px;"
         f'color:#4a7060;letter-spacing:2px;margin-bottom:16px;">'
-        f'PCA1 {var_exp[0]*100:.1f}% variance · PCA2 {var_exp[1]*100:.1f}% variance</div>',
+        f"PCA1 {var_exp[0] * 100:.1f}% variance · PCA2 {var_exp[1] * 100:.1f}% variance</div>",
         unsafe_allow_html=True,
     )
 
     categories = {
-        "key":            (df["key"],            "Key"),
-        "mode":           (df["mode"],           "Mode"),
+        "key": (df["key"], "Key"),
+        "mode": (df["mode"], "Mode"),
         "time_signature": (df["time_signature"], "Time Signature"),
-        "explicit":       (explicit_col,         "Explicit"),
+        "explicit": (explicit_col, "Explicit"),
     }
     cmaps = ["YlGn", "RdYlGn", "plasma", "coolwarm"]
 
     fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-    for (_, (cat_vals, cat_title)), ax, cmap in zip(categories.items(), axes.flatten(), cmaps):
+    for (_, (cat_vals, cat_title)), ax, cmap in zip(
+        categories.items(), axes.flatten(), cmaps, strict=False
+    ):
         codes = cat_vals.astype("category").cat.codes.values
-        sc = ax.scatter(data2d[:, 0], data2d[:, 1],
-                        c=codes, cmap=cmap, s=5, alpha=0.45, linewidths=0)
+        sc = ax.scatter(
+            data2d[:, 0],
+            data2d[:, 1],
+            c=codes,
+            cmap=cmap,
+            s=5,
+            alpha=0.45,
+            linewidths=0,
+        )
         ax.set_title(f"Category = {cat_title}", fontsize=9)
         ax.set_xlabel("PCA 1", fontsize=8)
         ax.set_ylabel("PCA 2", fontsize=8)
@@ -211,8 +248,13 @@ def _section_pca_2d(df, explicit_col):
         cb.ax.tick_params(labelsize=7, colors="#4a7060")
         cb.outline.set_edgecolor("#1e3530")
 
-    fig.suptitle("PCA 2D — audio features", color="#6aaa8a",
-                 fontsize=11, fontfamily="monospace", y=1.01)
+    fig.suptitle(
+        "PCA 2D — audio features",
+        color="#6aaa8a",
+        fontsize=11,
+        fontfamily="monospace",
+        y=1.01,
+    )
     fig.tight_layout(pad=2.0)
     _apply_dark_theme(fig, axes.flatten())
 
@@ -226,61 +268,90 @@ def _section_pca_3d(df):
     import plotly.graph_objects as go
 
     pca_cols = [c for c in _PCA_FEATURES if c in df.columns]
-    data_sc  = StandardScaler().fit_transform(df[pca_cols])
-    pca3     = PCA(n_components=3)
-    data3d   = pca3.fit_transform(data_sc)
+    data_sc = StandardScaler().fit_transform(df[pca_cols])
+    pca3 = PCA(n_components=3)
+    data3d = pca3.fit_transform(data_sc)
 
     var_exp = pca3.explained_variance_ratio_
     st.markdown(
-        f'<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;'
+        f"<div style=\"font-family:'JetBrains Mono',monospace;font-size:9px;"
         f'color:#4a7060;letter-spacing:2px;margin-bottom:16px;">'
-        f'PCA1 {var_exp[0]*100:.1f}% · PCA2 {var_exp[1]*100:.1f}% · PCA3 {var_exp[2]*100:.1f}% variance</div>',
+        f"PCA1 {var_exp[0] * 100:.1f}% · PCA2 {var_exp[1] * 100:.1f}% · PCA3 {var_exp[2] * 100:.1f}% variance</div>",
         unsafe_allow_html=True,
     )
 
     hit_labels = df["hit"].map({1: "Hit", 0: "Non-Hit"})
-    colors     = df["hit"].map({1: "#2ecc71", 0: "#e8365d"})
-    idx        = np.random.choice(len(data3d), size=min(8000, len(data3d)), replace=False)
+    colors = df["hit"].map({1: "#2ecc71", 0: "#e8365d"})
+    idx = np.random.choice(len(data3d), size=min(8000, len(data3d)), replace=False)
 
-    fig3d = go.Figure(data=[go.Scatter3d(
-        x=data3d[idx, 0], y=data3d[idx, 1], z=data3d[idx, 2],
-        mode="markers",
-        marker=dict(size=2.5, color=colors.iloc[idx], opacity=0.55, line=dict(width=0)),
-        text=hit_labels.iloc[idx],
-        hovertemplate="<b>%{text}</b><br>PCA1: %{x:.2f}<br>PCA2: %{y:.2f}<br>PCA3: %{z:.2f}<extra></extra>",
-    )])
+    fig3d = go.Figure(
+        data=[
+            go.Scatter3d(
+                x=data3d[idx, 0],
+                y=data3d[idx, 1],
+                z=data3d[idx, 2],
+                mode="markers",
+                marker={
+                    "size": 2.5,
+                    "color": colors.iloc[idx],
+                    "opacity": 0.55,
+                    "line": {"width": 0},
+                },
+                text=hit_labels.iloc[idx],
+                hovertemplate="<b>%{text}</b><br>PCA1: %{x:.2f}<br>PCA2: %{y:.2f}<br>PCA3: %{z:.2f}<extra></extra>",
+            )
+        ]
+    )
     fig3d.update_layout(
         paper_bgcolor="#0a1410",
         plot_bgcolor="#0a1410",
-        font=dict(family="JetBrains Mono, monospace", color="#4a7060", size=10),
-        scene=dict(
-            xaxis=dict(title="PCA 1", backgroundcolor="#0d1a14",
-                       gridcolor="#1e3530", showbackground=True, tickfont=dict(size=8)),
-            yaxis=dict(title="PCA 2", backgroundcolor="#0d1a14",
-                       gridcolor="#1e3530", showbackground=True, tickfont=dict(size=8)),
-            zaxis=dict(title="PCA 3", backgroundcolor="#0d1a14",
-                       gridcolor="#1e3530", showbackground=True, tickfont=dict(size=8)),
-            bgcolor="#0a1410",
-        ),
-        margin=dict(l=0, r=0, t=30, b=0),
+        font={"family": "JetBrains Mono, monospace", "color": "#4a7060", "size": 10},
+        scene={
+            "xaxis": {
+                "title": "PCA 1",
+                "backgroundcolor": "#0d1a14",
+                "gridcolor": "#1e3530",
+                "showbackground": True,
+                "tickfont": {"size": 8},
+            },
+            "yaxis": {
+                "title": "PCA 2",
+                "backgroundcolor": "#0d1a14",
+                "gridcolor": "#1e3530",
+                "showbackground": True,
+                "tickfont": {"size": 8},
+            },
+            "zaxis": {
+                "title": "PCA 3",
+                "backgroundcolor": "#0d1a14",
+                "gridcolor": "#1e3530",
+                "showbackground": True,
+                "tickfont": {"size": 8},
+            },
+            "bgcolor": "#0a1410",
+        },
+        margin={"l": 0, "r": 0, "t": 30, "b": 0},
         height=580,
     )
 
     with st.container(border=True):
         _chart_label("PCA 3D projection — Hit (green) vs Non-Hit (red)")
-        st.plotly_chart(fig3d, use_container_width=True,
-                        config={"displayModeBar": False})
+        st.plotly_chart(
+            fig3d, use_container_width=True, config={"displayModeBar": False}
+        )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Public entry point
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def render_eda_page():
     """EDA page — styled to match the SIGNAL/STUDIO design system."""
 
     # ── Page header ──────────────────────────────────────────────────────────
-    st.markdown("""
+    st.markdown(
+        """
 <style>
 .eda-section-label {
     font-family: 'JetBrains Mono', monospace; font-size: 9px;
@@ -301,27 +372,37 @@ def render_eda_page():
     color: #4a7060; letter-spacing: 1.5px; margin-bottom: 28px;
 }
 </style>
-""", unsafe_allow_html=True)
+""",
+        unsafe_allow_html=True,
+    )
 
-    st.markdown('<div class="eda-section-label">Exploratory Data Analysis</div>',
-                unsafe_allow_html=True)
-    st.markdown('<div class="eda-page-title">Dataset Insights</div>',
-                unsafe_allow_html=True)
-    st.markdown('<div class="eda-page-sub">Spotify audio features · hit vs non-hit analysis</div>',
-                unsafe_allow_html=True)
+    st.markdown(
+        '<div class="eda-section-label">Exploratory Data Analysis</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="eda-page-title">Dataset Insights</div>', unsafe_allow_html=True
+    )
+    st.markdown(
+        '<div class="eda-page-sub">Spotify audio features · hit vs non-hit analysis</div>',
+        unsafe_allow_html=True,
+    )
 
     # ── Load data ─────────────────────────────────────────────────────────────
     with st.spinner("Loading dataset…"):
         df, explicit_col = _load_eda_data()
 
     # ── Stat strip ────────────────────────────────────────────────────────────
-    n_tracks   = len(df)
+    n_tracks = len(df)
     n_features = len(df.columns) - 1
-    hit_rate   = int(df["hit"].mean() * 100)
-    avg_dance  = round(df["danceability"].mean(), 2) if "danceability" in df.columns else "—"
-    med_tempo  = int(df["tempo"].median())            if "tempo"        in df.columns else "—"
+    hit_rate = int(df["hit"].mean() * 100)
+    avg_dance = (
+        round(df["danceability"].mean(), 2) if "danceability" in df.columns else "—"
+    )
+    med_tempo = int(df["tempo"].median()) if "tempo" in df.columns else "—"
 
-    st.markdown(f"""
+    st.markdown(
+        f"""
 <div style="display:flex;gap:0;border:1px solid #1e3530;border-radius:8px;
             overflow:hidden;margin-bottom:32px;">
   <div style="flex:1;padding:18px 24px;border-right:1px solid #1e3530;background:#0a1410;">
@@ -345,19 +426,35 @@ def render_eda_page():
     <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:2px;color:#4a7060;text-transform:uppercase;">Median tempo</div>
   </div>
 </div>
-""", unsafe_allow_html=True)
+""",
+        unsafe_allow_html=True,
+    )
 
     # ── Analysis selector ─────────────────────────────────────────────────────
-    ANALYSES = ["Dataset Description", "Correlation Matrix", "Pair Plot", "PCA 2D", "PCA 3D"]
+    ANALYSES = [
+        "Dataset Description",
+        "Correlation Matrix",
+        "Pair Plot",
+        "PCA 2D",
+        "PCA 3D",
+    ]
     analysis = st.segmented_control(
-        label="Analysis", options=ANALYSES, default=ANALYSES[0],
-        label_visibility="collapsed", key="eda_analysis",
+        label="Analysis",
+        options=ANALYSES,
+        default=ANALYSES[0],
+        label_visibility="collapsed",
+        key="eda_analysis",
     )
     st.markdown("<br>", unsafe_allow_html=True)
 
     # ── Dispatch ──────────────────────────────────────────────────────────────
-    if   analysis == "Dataset Description": _section_dataset_description(df)
-    elif analysis == "Correlation Matrix":  _section_correlation_matrix(df)
-    elif analysis == "Pair Plot":           _section_pair_plot(df)
-    elif analysis == "PCA 2D":             _section_pca_2d(df, explicit_col)
-    elif analysis == "PCA 3D":             _section_pca_3d(df)
+    if analysis == "Dataset Description":
+        _section_dataset_description(df)
+    elif analysis == "Correlation Matrix":
+        _section_correlation_matrix(df)
+    elif analysis == "Pair Plot":
+        _section_pair_plot(df)
+    elif analysis == "PCA 2D":
+        _section_pca_2d(df, explicit_col)
+    elif analysis == "PCA 3D":
+        _section_pca_3d(df)
