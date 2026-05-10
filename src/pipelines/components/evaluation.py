@@ -4,12 +4,7 @@ from src.pipelines.config import BASE_IMAGE
 
 
 @component(
-    base_image=BASE_IMAGE,
-    packages_to_install=[
-        "pandas",
-        "scikit-learn",
-        "pyarrow"
-    ]
+    base_image=BASE_IMAGE, packages_to_install=["pandas", "scikit-learn", "pyarrow"]
 )
 def evaluate_model(
     model: Input[Model],
@@ -19,8 +14,7 @@ def evaluate_model(
     import pickle
 
     import pandas as pd
-    from sklearn.metrics import (accuracy_score, f1_score, precision_score,
-                                 recall_score)
+    from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
     # 1. Load the TEST data
     df = pd.read_parquet(preprocessed_dataset.path)

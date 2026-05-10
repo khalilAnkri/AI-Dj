@@ -11,12 +11,12 @@ ui.py — All reusable UI components matching the HTML design spec.
 import streamlit as st
 from charts import make_radar_chart
 
-_GREEN  = "#2ecc71"
-_RED    = "#e8365d"
-_AMBER  = "#e8a836"
-_MUTED  = "#4a7060"
-_LABEL  = "#6aaa8a"
-_BG     = "#0e1e1a"
+_GREEN = "#2ecc71"
+_RED = "#e8365d"
+_AMBER = "#e8a836"
+_MUTED = "#4a7060"
+_LABEL = "#6aaa8a"
+_BG = "#0e1e1a"
 _BORDER = "#1e3530"
 
 
@@ -24,13 +24,15 @@ _BORDER = "#1e3530"
 # Page chrome
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def top_nav():
     if "page" not in st.session_state:
         st.session_state["page"] = "home"
 
     current_page = st.session_state["page"]
 
-    st.markdown("""
+    st.markdown(
+        """
     <div class="top-nav">
     <div class="brand">
         <div class="brand-mark">
@@ -53,17 +55,25 @@ def top_nav():
         <span><i></i>Live</span>
     </div>
     </div>
-""", unsafe_allow_html=True)
+""",
+        unsafe_allow_html=True,
+    )
 
     col1, col2, *_ = st.columns([1, 1, 8])
     with col1:
-        if st.button("Home", key="nav_home",
-                     type="primary" if current_page == "home" else "secondary"):
+        if st.button(
+            "Home",
+            key="nav_home",
+            type="primary" if current_page == "home" else "secondary",
+        ):
             st.session_state["page"] = "home"
             st.rerun()
     with col2:
-        if st.button("EDA", key="nav_eda",
-                     type="primary" if current_page == "eda" else "secondary"):
+        if st.button(
+            "EDA",
+            key="nav_eda",
+            type="primary" if current_page == "eda" else "secondary",
+        ):
             st.session_state["page"] = "eda"
             st.rerun()
 
@@ -71,7 +81,8 @@ def top_nav():
 
 
 def render_header():
-    st.markdown("""
+    st.markdown(
+        """
 <div style="
     display:flex;
     align-items:center;
@@ -183,11 +194,14 @@ def render_header():
     </div>
   </div>
 </div>
-""", unsafe_allow_html=True)
+""",
+        unsafe_allow_html=True,
+    )
 
 
 def render_footer():
-    st.markdown("""
+    st.markdown(
+        """
 <div style="
     margin-top:60px;border-top:1px solid #1e3530;padding:16px 0;
     display:flex;justify-content:space-between;align-items:center;
@@ -202,7 +216,9 @@ def render_footer():
         INFO9023 · Team AI-DJ
     </span>
 </div>
-""", unsafe_allow_html=True)
+""",
+        unsafe_allow_html=True,
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -210,12 +226,14 @@ def render_footer():
 # Returns a dict of features when PREDICT is clicked, else None
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def render_manual_inputs() -> dict | None:
     """
     3-column audio feature input grid using native Streamlit widgets.
     Returns the feature dict when the user clicks PREDICT, else None.
     """
-    st.markdown("""
+    st.markdown(
+        """
 <style>
 div[data-testid="stVerticalBlockBorderWrapper"] > div[data-testid="stVerticalBlock"],
 div[data-testid="stVerticalBlockBorderWrapper"] {
@@ -225,11 +243,13 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border-radius: 12px !important;
 }
 </style>
-""", unsafe_allow_html=True)
+""",
+        unsafe_allow_html=True,
+    )
 
     st.markdown(
-        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;'
-        'letter-spacing:3px;color:#4a7060;text-transform:uppercase;'
+        "<div style=\"font-family:'JetBrains Mono',monospace;font-size:9px;"
+        "letter-spacing:3px;color:#4a7060;text-transform:uppercase;"
         'margin-bottom:14px;">Manually Input Audio Features</div>',
         unsafe_allow_html=True,
     )
@@ -238,28 +258,51 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
     with col1:
         with st.container(border=True):
-            danceability = st.slider("Danceability",    0.0, 1.0, 0.70, 0.01, key="m_dance")
-            energy       = st.slider("Energy",          0.0, 1.0, 0.70, 0.01, key="m_energy")
-            valence      = st.slider("Valence",         0.0, 1.0, 0.60, 0.01, key="m_valence")
-            speechiness  = st.slider("Speechiness",     0.0, 1.0, 0.05, 0.01, key="m_speech")
+            danceability = st.slider(
+                "Danceability", 0.0, 1.0, 0.70, 0.01, key="m_dance"
+            )
+            energy = st.slider("Energy", 0.0, 1.0, 0.70, 0.01, key="m_energy")
+            valence = st.slider("Valence", 0.0, 1.0, 0.60, 0.01, key="m_valence")
+            speechiness = st.slider("Speechiness", 0.0, 1.0, 0.05, 0.01, key="m_speech")
 
     with col2:
         with st.container(border=True):
-            acousticness     = st.slider("Acousticness",     0.0, 1.0, 0.10, 0.01, key="m_acoustic")
-            instrumentalness = st.slider("Instrumentalness", 0.0, 1.0, 0.00, 0.01, key="m_instru")
-            liveness         = st.slider("Liveness",         0.0, 1.0, 0.08, 0.01, key="m_live")
+            acousticness = st.slider(
+                "Acousticness", 0.0, 1.0, 0.10, 0.01, key="m_acoustic"
+            )
+            instrumentalness = st.slider(
+                "Instrumentalness", 0.0, 1.0, 0.00, 0.01, key="m_instru"
+            )
+            liveness = st.slider("Liveness", 0.0, 1.0, 0.08, 0.01, key="m_live")
             mode_label = st.selectbox("Mode", ["Major", "Minor"], key="m_mode")
             mode = 1 if mode_label == "Major" else 0
 
     with col3:
         with st.container(border=True):
             loudness = st.slider("Loudness (dB)", -60.0, 0.0, -9.4, 0.1, key="m_loud")
-            tempo    = st.slider("Tempo (BPM)",    50.0, 210.0, 110.0, 0.5, key="m_tempo")
-            key_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+            tempo = st.slider("Tempo (BPM)", 50.0, 210.0, 110.0, 0.5, key="m_tempo")
+            key_names = [
+                "C",
+                "C#",
+                "D",
+                "D#",
+                "E",
+                "F",
+                "F#",
+                "G",
+                "G#",
+                "A",
+                "A#",
+                "B",
+            ]
             key_label = st.selectbox("Key", key_names, key="m_key")
-            key_val   = key_names.index(key_label)
-            duration_ms    = st.number_input("Duration [ms]", 30000, 600000, 200000, 1000, key="m_dur")
-            time_signature = st.selectbox("Time Signature", [3, 4, 5, 6, 7], index=1, key="m_timesig")
+            key_val = key_names.index(key_label)
+            duration_ms = st.number_input(
+                "Duration [ms]", 30000, 600000, 200000, 1000, key="m_dur"
+            )
+            time_signature = st.selectbox(
+                "Time Signature", [3, 4, 5, 6, 7], index=1, key="m_timesig"
+            )
 
     st.markdown("<div style='margin-top:4px'>", unsafe_allow_html=True)
     clicked = st.button("▶ PREDICT", key="manual_predict_btn")
@@ -267,19 +310,19 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
     if clicked:
         return {
-            "danceability":     danceability,
-            "energy":           energy,
-            "valence":          valence,
-            "speechiness":      speechiness,
-            "acousticness":     acousticness,
+            "danceability": danceability,
+            "energy": energy,
+            "valence": valence,
+            "speechiness": speechiness,
+            "acousticness": acousticness,
             "instrumentalness": instrumentalness,
-            "liveness":         liveness,
-            "mode":             mode,
-            "loudness":         loudness,
-            "tempo":            tempo,
-            "key":              key_val,
-            "duration_ms":      int(duration_ms),
-            "time_signature":   int(time_signature),
+            "liveness": liveness,
+            "mode": mode,
+            "loudness": loudness,
+            "tempo": tempo,
+            "key": key_val,
+            "duration_ms": int(duration_ms),
+            "time_signature": int(time_signature),
         }
     return None
 
@@ -288,20 +331,24 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 # Result renderer — single row, 3 equal columns
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def render_result(result: dict):
-    prediction   = result.get("prediction", "Unknown")
-    track_name   = result.get("track_name", "Unknown")
-    artist       = result.get("artist", "Unknown")
-    thumbnail    = result.get("thumbnail", "")
-    explanation  = result.get("explanation", "")
+    prediction = result.get("prediction", "Unknown")
+    track_name = result.get("track_name", "Unknown")
+    artist = result.get("artist", "Unknown")
+    thumbnail = result.get("thumbnail", "")
+    explanation = result.get("explanation", "")
     top_features = result.get("top_features", {})
-    recs         = result.get("if_you_liked_this", [])
+    recs = result.get("if_you_liked_this", [])
 
     is_hit = prediction == "Hit"
 
-    st.markdown('<div style="position:relative;z-index:1;margin-top:8px"></div>',
-                unsafe_allow_html=True)
-    st.markdown("""
+    st.markdown(
+        '<div style="position:relative;z-index:1;margin-top:8px"></div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        """
 <style>
 [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] > div > div >
 [data-testid="stVerticalBlockBorderWrapper"] {
@@ -326,7 +373,9 @@ def render_result(result: dict):
     flex-direction: column;
 }
 </style>
-""", unsafe_allow_html=True)
+""",
+        unsafe_allow_html=True,
+    )
 
     col1, col2, col3 = st.columns([1, 1, 1])
 
@@ -346,37 +395,43 @@ def render_result(result: dict):
 # Private sub-renderers
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _render_track_analysis(track_name, artist, thumbnail, is_hit, explanation=""):
-    emoji       = "🔥" if is_hit else "💀"
+    emoji = "🔥" if is_hit else "💀"
     badge_class = "badge-hit" if is_hit else "badge-flop"
-    label       = "CERTIFIED HIT" if is_hit else "CERTIFIED FLOP"
+    label = "CERTIFIED HIT" if is_hit else "CERTIFIED FLOP"
 
     with st.container(border=True):
-        st.markdown('<div class="card-label">Track Analysis</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="card-label">Track Analysis</div>', unsafe_allow_html=True
+        )
         if thumbnail:
             st.image(thumbnail, width=88)
         st.markdown(
             f'<div class="track-name">{track_name}</div>'
             f'<div class="track-artist">{artist}</div>',
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown(f'<span class="{badge_class}">{label} {emoji}</span>', unsafe_allow_html=True)
+        st.markdown(
+            f'<span class="{badge_class}">{label} {emoji}</span>',
+            unsafe_allow_html=True,
+        )
         if explanation:
             st.markdown(
                 f'<div class="explanation-text" style="margin-top:16px;">{explanation}</div>',
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
 
 
 def _render_key_drivers(top_features: dict, prediction: str):
     is_hit = prediction == "Hit"
-    color  = _GREEN if is_hit else _RED
+    color = _GREEN if is_hit else _RED
 
     with st.container(border=True):
         st.markdown('<div class="card-label">Key Drivers</div>', unsafe_allow_html=True)
         st.markdown(
-            '<div style="font-family:\'JetBrains Mono\',monospace;font-size:22px;'
+            "<div style=\"font-family:'JetBrains Mono',monospace;font-size:22px;"
             'font-weight:700;color:#ffffff;margin-bottom:16px;letter-spacing:-0.5px;">'
             "What's pushing the verdict</div>",
             unsafe_allow_html=True,
@@ -389,7 +444,7 @@ def _render_key_drivers(top_features: dict, prediction: str):
                     fval = float(val)
                 except (ValueError, TypeError):
                     continue
-                bar_pct  = int(round(abs(fval) / max_abs * 100))
+                bar_pct = int(round(abs(fval) / max_abs * 100))
                 disp_key = feat.replace("_", " ").title()
                 feat_low = feat.lower()
                 if "loudness" in feat_low:
@@ -400,7 +455,8 @@ def _render_key_drivers(top_features: dict, prediction: str):
                     disp_val = f"{int(fval / 1000)}s"
                 else:
                     disp_val = f"{fval:.2f}"
-                st.markdown(f"""
+                st.markdown(
+                    f"""
 <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px;">
     <span style="font-family:'JetBrains Mono',monospace;font-size:9px;
                  color:#444;min-width:18px;letter-spacing:1px;">{i:02d}</span>
@@ -413,10 +469,12 @@ def _render_key_drivers(top_features: dict, prediction: str):
     <span style="font-family:'JetBrains Mono',monospace;font-size:11px;
                  color:{color};min-width:58px;text-align:right;
                  letter-spacing:0.5px;">{disp_val}</span>
-</div>""", unsafe_allow_html=True)
+</div>""",
+                    unsafe_allow_html=True,
+                )
         else:
             st.markdown(
-                f'<div style="color:{_MUTED};font-family:\'JetBrains Mono\',monospace;'
+                f"<div style=\"color:{_MUTED};font-family:'JetBrains Mono',monospace;"
                 f'font-size:11px;text-align:center;padding:40px 0;">NO FEATURE DATA</div>',
                 unsafe_allow_html=True,
             )
@@ -424,14 +482,16 @@ def _render_key_drivers(top_features: dict, prediction: str):
 
 def _render_audio_profile(top_features: dict, prediction: str):
     is_hit = prediction == "Hit"
-    color  = _GREEN if is_hit else _RED
+    color = _GREEN if is_hit else _RED
 
     with st.container(border=True):
-        st.markdown('<div class="card-label">Audio Profile</div>', unsafe_allow_html=True)
         st.markdown(
-            '<div style="font-family:\'JetBrains Mono\',monospace;font-size:22px;'
+            '<div class="card-label">Audio Profile</div>', unsafe_allow_html=True
+        )
+        st.markdown(
+            "<div style=\"font-family:'JetBrains Mono',monospace;font-size:22px;"
             'font-weight:700;color:#ffffff;margin-bottom:4px;letter-spacing:-0.5px;">'
-            'Feature radar</div>',
+            "Feature radar</div>",
             unsafe_allow_html=True,
         )
 
@@ -460,10 +520,10 @@ def _render_audio_profile(top_features: dict, prediction: str):
                     disp_val = str(val)
                 feat_items.append((disp_key, disp_val))
 
-            mid         = (len(feat_items) + 1) // 2
-            left_feats  = feat_items[:mid]
+            mid = (len(feat_items) + 1) // 2
+            left_feats = feat_items[:mid]
             right_feats = feat_items[mid:]
-            gc1, gc2    = st.columns(2)
+            gc1, gc2 = st.columns(2)
 
             row_style = "display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;"
             key_style = "font-family:'DM Sans',sans-serif;font-size:12px;color:#888;letter-spacing:0.3px;"
@@ -472,14 +532,17 @@ def _render_audio_profile(top_features: dict, prediction: str):
             for gcol, items in ((gc1, left_feats), (gc2, right_feats)):
                 with gcol:
                     for k, v in items:
-                        st.markdown(f"""
+                        st.markdown(
+                            f"""
 <div style="{row_style}">
     <span style="{key_style}">{k}</span>
     <span style="{val_style}">{v}</span>
-</div>""", unsafe_allow_html=True)
+</div>""",
+                            unsafe_allow_html=True,
+                        )
         else:
             st.markdown(
-                f'<div style="color:{_MUTED};font-family:\'JetBrains Mono\',monospace;'
+                f"<div style=\"color:{_MUTED};font-family:'JetBrains Mono',monospace;"
                 f'font-size:11px;text-align:center;padding:40px 0;">NO FEATURE DATA</div>',
                 unsafe_allow_html=True,
             )
@@ -489,26 +552,29 @@ def _render_recommendations(recs):
     with st.container(border=True):
         st.markdown(
             '<div class="card-label">🎵 If You Liked This — You Might Also Love</div>',
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
         rec_cols = st.columns(len(recs))
         for i, rec in enumerate(recs):
             with rec_cols[i]:
                 if rec.get("thumbnail"):
                     st.image(rec["thumbnail"], use_container_width=True)
-                st.markdown(f"""
+                st.markdown(
+                    f"""
 <div style="margin-top:8px;">
     <div style="font-family:'DM Sans',sans-serif;font-size:13px;
-                font-weight:600;color:#d4ede5;">{rec.get("track_name","")}</div>
+                font-weight:600;color:#d4ede5;">{rec.get("track_name", "")}</div>
     <div style="font-size:11px;color:{_MUTED};margin-top:2px;
-                font-family:'DM Sans',sans-serif;">{rec.get("artist","")}</div>
-    <a href="{rec.get('spotify_url','#')}" target="_blank"
+                font-family:'DM Sans',sans-serif;">{rec.get("artist", "")}</div>
+    <a href="{rec.get("spotify_url", "#")}" target="_blank"
        style="font-size:11px;color:{_GREEN};text-decoration:none;
               font-family:'JetBrains Mono',monospace;
               letter-spacing:1px;margin-top:4px;display:block;">
         ▶ OPEN IN SPOTIFY
     </a>
-</div>""", unsafe_allow_html=True)
+</div>""",
+                    unsafe_allow_html=True,
+                )
 
 
 def render_tabs() -> str:
@@ -522,7 +588,7 @@ def render_tabs() -> str:
         options=tabs,
         default=st.session_state["active_tab"],
         label_visibility="collapsed",
-        key="nav_bar"
+        key="nav_bar",
     )
 
     if choice and choice != st.session_state["active_tab"]:
@@ -530,5 +596,3 @@ def render_tabs() -> str:
         st.rerun()
 
     return st.session_state["active_tab"]
-
-from eda import render_eda_page  

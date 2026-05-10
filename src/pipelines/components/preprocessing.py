@@ -5,12 +5,16 @@ from src.pipelines.config import BASE_IMAGE
 
 @component(
     base_image=BASE_IMAGE,
-    packages_to_install=["pandas", "pyarrow", "scikit-learn"] # Add scikit-learn for splitting
+    packages_to_install=[
+        "pandas",
+        "pyarrow",
+        "scikit-learn",
+    ],  # Add scikit-learn for splitting
 )
 def training_preprocess(
     input_dataset: Input[Dataset],
     train_dataset: Output[Dataset],  # New: Specifically for Training
-    test_dataset: Output[Dataset],   # New: Specifically for Evaluation
+    test_dataset: Output[Dataset],  # New: Specifically for Evaluation
 ):
     import pandas as pd
     from sklearn.model_selection import train_test_split
@@ -36,7 +40,7 @@ def training_preprocess(
         numeric_df,
         test_size=0.2,
         random_state=42,
-        stratify=numeric_df["hit"] # Ensures equal hit/miss ratio in both sets
+        stratify=numeric_df["hit"],  # Ensures equal hit/miss ratio in both sets
     )
 
     # 5. Save separate artifacts

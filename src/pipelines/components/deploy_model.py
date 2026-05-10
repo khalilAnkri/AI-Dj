@@ -7,7 +7,7 @@ from src.pipelines.config import BASE_IMAGE
     base_image=BASE_IMAGE,
     packages_to_install=[
         "google-cloud-aiplatform",
-    ]
+    ],
 )
 def deploy_model(
     registered_model: Input[Model],
@@ -19,7 +19,6 @@ def deploy_model(
     max_replicas: int = 2,
 ):
 
-    import json
     from google.cloud import aiplatform
 
     aiplatform.init(project=project_id, location=location)
@@ -61,7 +60,7 @@ def deploy_model(
         endpoint.undeploy(deployed_model_id=deployed_model.id)
 
     # 4. Deploy the new model version
-    print(f"Deploying model to endpoint. This takes ~10-15 minutes...")
+    print("Deploying model to endpoint. This takes ~10-15 minutes...")
     vertex_model.deploy(
         endpoint=endpoint,
         deployed_model_display_name="spotify-hit-predictor-live",

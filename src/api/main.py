@@ -1,14 +1,19 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import FastAPI, HTTPException
 
-from .services import ExplanationService, PredictionService, RecommendationService, SpotifyService
+from .services import (
+    ExplanationService,
+    PredictionService,
+    RecommendationService,
+    SpotifyService,
+)
 
 app = FastAPI(title="Spotify Hit Predictor")
 
-spotify_service        = SpotifyService()
-prediction_service     = PredictionService()
-explanation_service    = ExplanationService()
+spotify_service = SpotifyService()
+prediction_service = PredictionService()
+explanation_service = ExplanationService()
 recommendation_service = RecommendationService()
 history = []
 
@@ -30,41 +35,46 @@ async def predict(data: dict):
     if "error" in audio_features:
         raise HTTPException(status_code=404, detail=audio_features["error"])
 
-    track_id   = audio_features.pop("_track_id", None)
-    metadata   = spotify_service.get_metadata(track_id) if track_id else {}
+    track_id = audio_features.pop("_track_id", None)
+    metadata = spotify_service.get_metadata(track_id) if track_id else {}
     track_name = metadata.get("track_name", "Unknown")
-    artist     = metadata.get("artist", "Unknown")
+    artist = metadata.get("artist", "Unknown")
 
     try:
         result = prediction_service.predict(audio_features)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Prediction error: {str(e)}"
+        ) from e
 
     explanation = explanation_service.explain(
-        track_name      = track_name,
-        artist          = artist,
-        prediction      = result["class_name"],
-        confidence      = result["confidence"],
-        hit_probability = 1.0 if result["class_index"] == 1 else 0.0,
-        top_features    = result["top_features"],
+        track_name=track_name,
+        artist=artist,
+        prediction=result["class_name"],
+        confidence=result["confidence"],
+        hit_probability=1.0 if result["class_index"] == 1 else 0.0,
+        top_features=result["top_features"],
     )
 
-    artist_id       = metadata.get("artist_id", "")
-    recommendations = recommendation_service.get_recommendations(track_id, artist_id, audio_features) if track_id else []
-
+    artist_id = metadata.get("artist_id", "")
+    recommendations = (
+        recommendation_service.get_recommendations(track_id, artist_id, audio_features)
+        if track_id
+        else []
+    )
 
     response = {
-        "id":           len(history),
-        "predicted_at": datetime.now(timezone.utc).isoformat(),
-        "query":        query,
-        "track_name":   track_name,
-        "artist":       artist,
-        "thumbnail":    metadata.get("thumbnail", ""),
-        "spotify_url":  metadata.get("spotify_url", query),
-        "prediction":   result["class_name"],
-        "confidence":   f"{round(result['confidence'] * 100, 1)}%",
+        "id": len(history),
+        "predicted_at": datetime.now(UTC).isoformat(),
+        "query": query,
+        "track_name": track_name,
+        "artist": artist,
+        "thumbnail": metadata.get("thumbnail", ""),
+        "spotify_url": metadata.get("spotify_url", query),
+        "prediction": result["class_name"],
+        "confidence": f"{round(result['confidence'] * 100, 1)}%",
         "top_features": result["top_features"],
-        "explanation":  explanation,
+        "explanation": explanation,
         "if_you_liked_this": recommendations,
     }
 
@@ -91,24 +101,26 @@ async def predict_manual(data: dict):
     try:
         result = prediction_service.predict_manually(data)
         explanation = explanation_service.explain(
-            track_name      = "Manual Input",
-            artist          = "N/A",
-            prediction      = result["class_name"],
-            confidence      = result["confidence"],
-            hit_probability = 1.0 if result["class_index"] == 1 else 0.0,
-            top_features    = result["top_features"],
+            track_name="Manual Input",
+            artist="N/A",
+            prediction=result["class_name"],
+            confidence=result["confidence"],
+            hit_probability=1.0 if result["class_index"] == 1 else 0.0,
+            top_features=result["top_features"],
         )
         response = {
-            "id":                len(history),
-            "predicted_at":      datetime.now(timezone.utc).isoformat(),
-            "source":            "manual_input",
-            "prediction":        result["class_name"],
-            "confidence":        f"{round(result['confidence'] * 100, 1)}%",
-            "top_features":      result["top_features"],
-            "explanation":       explanation,
+            "id": len(history),
+            "predicted_at": datetime.now(UTC).isoformat(),
+            "source": "manual_input",
+            "prediction": result["class_name"],
+            "confidence": f"{round(result['confidence'] * 100, 1)}%",
+            "top_features": result["top_features"],
+            "explanation": explanation,
             "features_received": data,
         }
         history.append(response)
         return response
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Prediction error: {str(e)}"
+        ) from e

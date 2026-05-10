@@ -4,12 +4,7 @@ from src.pipelines.config import BASE_IMAGE
 
 
 @component(
-    base_image=BASE_IMAGE,
-    packages_to_install=[
-        "pandas",
-        "scikit-learn",
-        "pyarrow"
-    ]
+    base_image=BASE_IMAGE, packages_to_install=["pandas", "scikit-learn", "pyarrow"]
 )
 def train_model(
     preprocessed_dataset: Input[Dataset],
@@ -35,7 +30,7 @@ def train_model(
         n_estimators=n_estimators,
         max_depth=None,
         random_state=42,
-        class_weight="balanced"
+        class_weight="balanced",
     )
 
     model_instance.fit(X, y)
@@ -51,7 +46,11 @@ def train_model(
     # 5. Feature importance
     importance = model_instance.feature_importances_
     feature_imp = pd.DataFrame({"feature": X.columns, "importance": importance})
-    top_5 = feature_imp.sort_values(by="importance", ascending=False)["feature"].head(5).tolist()
+    top_5 = (
+        feature_imp.sort_values(by="importance", ascending=False)["feature"]
+        .head(5)
+        .tolist()
+    )
 
     # 6. Save outputs as .pkl
     model_file_path = model.path + ".pkl"

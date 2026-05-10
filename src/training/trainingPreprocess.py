@@ -9,13 +9,14 @@ Team AI-DJ :
     - Paulis Antoine
 """
 
+
 def trainingPreprocess(df):
     """
     This function makes the preprocessing of the original dataset in order to have
     a dataset usuable for the training step.
 
     Args:
-        df: pandas data frame about the Spotify track dataset from Kaggle. 
+        df: pandas data frame about the Spotify track dataset from Kaggle.
 
     Returns:
         X: Feature dataset containing only the numerical variables and exlcuding the target variable, hit.
