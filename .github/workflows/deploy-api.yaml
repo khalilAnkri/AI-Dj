@@ -8,6 +8,16 @@ on:
       - "Dockerfile.backend"
       - "cloudbuild.yaml"
       - "requirements.txt"
+  workflow_dispatch:
+    inputs:
+      model_id:
+        description: "Vertex AI Model ID (overrides secret MODEL_ID)"
+        required: false
+        default: ""
+      endpoint_id:
+        description: "Vertex AI Endpoint ID (overrides secret VERTEX_ENDPOINT_ID)"
+        required: false
+        default: ""
 
 jobs:
   deploy-api:
@@ -39,12 +49,19 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
+          # Use inputs if provided (triggered by pipeline), otherwise fall back to secrets
+          MODEL_ID="${{ github.event.inputs.model_id || secrets.MODEL_ID }}"
+          VERTEX_ENDPOINT_ID="${{ github.event.inputs.endpoint_id || secrets.VERTEX_ENDPOINT_ID }}"
+
+          echo "Deploying with MODEL_ID=${MODEL_ID}"
+          echo "Deploying with VERTEX_ENDPOINT_ID=${VERTEX_ENDPOINT_ID}"
+
           gcloud run deploy ai-dj-api \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/ai-dj-api:${{ github.sha }} \
             --region ${{ secrets.GCP_LOCATION }} \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars "RAPIDAPI_KEY=${{ secrets.RAPIDAPI_KEY }},GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},GCP_LOCATION=${{ secrets.GCP_LOCATION }},VERTEX_ENDPOINT_ID=${{ secrets.VERTEX_ENDPOINT_ID }},GCP_BUCKET_NAME=${{ secrets.GCP_BUCKET_NAME }},GCS_MODEL_ARTIFACTS_URI=${{ secrets.GCS_MODEL_ARTIFACTS_URI }},MODEL_ID=${{ secrets.MODEL_ID }}"
+            --set-env-vars "RAPIDAPI_KEY=${{ secrets.RAPIDAPI_KEY }},GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},GCP_LOCATION=${{ secrets.GCP_LOCATION }},VERTEX_ENDPOINT_ID=${VERTEX_ENDPOINT_ID},GCP_BUCKET_NAME=${{ secrets.GCP_BUCKET_NAME }},GCS_MODEL_ARTIFACTS_URI=${{ secrets.GCS_MODEL_ARTIFACTS_URI }},MODEL_ID=${MODEL_ID}"
 
       - name: Verify deployment
         run: |

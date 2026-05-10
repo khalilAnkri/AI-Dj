@@ -19,6 +19,7 @@ def deploy_model(
     max_replicas: int = 2,
 ):
 
+    import json
     from google.cloud import aiplatform
 
     aiplatform.init(project=project_id, location=location)
@@ -70,12 +71,28 @@ def deploy_model(
         traffic_percentage=100,
     )
 
+    # 5. Extract the short numeric IDs needed by the Cloud Run API
+    new_model_id = vertex_model.resource_name.split("/")[-1]
+    new_endpoint_id = endpoint.resource_name.split("/")[-1]
+
+    # Write IDs to files so the GitHub Actions step can read them as outputs
+    with open("/tmp/new_model_id.txt", "w") as f:
+        f.write(new_model_id)
+
+    with open("/tmp/new_endpoint_id.txt", "w") as f:
+        f.write(new_endpoint_id)
+
     print("-" * 40)
     print("SUCCESS — model is live!")
     print(f"Endpoint resource name : {endpoint.resource_name}")
-    print(f"Endpoint ID            : {endpoint.name}")
+    print(f"Endpoint ID            : {new_endpoint_id}")
+    print(f"Model ID               : {new_model_id}")
     print(
         f"Test it: gcloud ai endpoints predict {endpoint.name} "
         f"--region={location} --json-request=request.json"
     )
     print("-" * 40)
+
+    # Emit KFP output variables (captured by the pipeline step logger)
+    print(f"new_model_id={new_model_id}")
+    print(f"new_endpoint_id={new_endpoint_id}")
