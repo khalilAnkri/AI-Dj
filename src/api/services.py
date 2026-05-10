@@ -13,7 +13,6 @@ Team AI-DJ:
     - Paulis Antoine
 """
 
-import os
 import time
 
 import requests
@@ -143,9 +142,9 @@ class SpotifyService:
             try:
                 response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
             except requests.exceptions.Timeout:
-                raise Exception(f"Musicae API timed out after {REQUEST_TIMEOUT}s.")
+                raise Exception(f"Musicae API timed out after {REQUEST_TIMEOUT}s.") from None
             except requests.exceptions.ConnectionError:
-                raise Exception("Could not connect to Musicae API.")
+                raise Exception("Could not connect to Musicae API.") from None
 
             if response.status_code == 429:
                 wait = 2 ** attempt  # 1 s → 2 s → 4 s
@@ -172,7 +171,7 @@ class SpotifyService:
             except Exception:
                 raise Exception(
                     f"Musicae API returned non-JSON response: {response.text[:200]}"
-                )
+                ) from None
 
             if not data:
                 return {"error": f"No audio features returned for track '{track_id}'."}
@@ -404,7 +403,7 @@ class RecommendationService:
         self,
         track_id:       str,
         artist_id:      str  = "",
-        audio_features: dict = {},
+        audio_features: dict = None,
         limit:          int  = 5,
     ) -> list:
         """
@@ -413,6 +412,8 @@ class RecommendationService:
         Each item contains: track_name, artist, spotify_url, thumbnail.
         Returns empty list on failure — recommendations are non-critical.
         """
+        if audio_features is None:
+            audio_features = {}
         if audio_features is None:
             audio_features = {}
         headers = {

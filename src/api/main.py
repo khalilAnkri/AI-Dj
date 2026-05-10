@@ -1,6 +1,5 @@
-from datetime import UTC, datetime
-
 import asyncio
+from datetime import UTC, datetime
 
 from fastapi import FastAPI, HTTPException
 
@@ -89,7 +88,7 @@ async def predict(data: dict):
 
     response = {
         "id":                len(history),
-        "predicted_at":      datetime.now(timezone.utc).isoformat(),
+        "predicted_at":      datetime.now(UTC).isoformat(),
         "query":             query,
         "track_name":        track_name,
         "artist":            artist,
