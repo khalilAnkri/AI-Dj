@@ -1,0 +1,29 @@
+# Pip compatibility mode, with our requirements.txt
+# create a new Python virtual environment
+uv venv --python 3.12
+
+# UV configuration 
+.venv\Scripts\activate # Windows
+
+# install from requirements.txt
+uv pip install -r requirements.txt
+
+uv run uvicorn app:app --host 0.0.0.0 --port 8080 --reload
+
+
+docker build -t ui-app . 
+docker run -p 8080:8080 ui-app
+
+# Deployment successful 
+(AI-Dj) PS C:\Users\huiyi\Documents\ULiege\Master\Master-m1_local\AI-Dj> gcloud run deploy ui-app --project=ai-dj-487610 --region=europe-west1 --source=$PWD --allow-unauthenticated
+Building using Dockerfile and deploying container to Cloud Run service [ui-app] in project [ai-dj-487610] region [europe-west1]
+OK Building and deploying... Done.
+  OK Validating configuration...
+  OK Uploading sources...
+  OK Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds;region=europe-west1/c046d122-59d1-41b4-a745-01c1ade023ff?project=343602206157].
+  OK Creating Revision...
+  OK Routing traffic...
+  OK Setting IAM Policy...
+Done.
+Service [ui-app] revision [ui-app-00003-zq5] has been deployed and is serving 100 percent of traffic.
+Service URL: https://ui-app-343602206157.europe-west1.run.app
